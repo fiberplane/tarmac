@@ -30,3 +30,24 @@ Tracked external references:
 - `references/cursor-cookbook/sdk/quickstart`
 - `references/cursor-cookbook/sdk/agent-kanban`
 - `references/cursor-cookbook/self-hosted-cloud-agent`
+
+## Tarmac Bootstrap Proof
+
+Tarmac includes a gated Cursor Cloud bootstrap proof:
+
+```bash
+TARMAC_CURSOR_BOOTSTRAP_E2E=1 \
+TARMAC_CURSOR_BOOTSTRAP_ISSUE_ID=TARM-... \
+bun run e2e:cursor-bootstrap
+```
+
+Required env names are `CURSOR_API_KEY`, `FP_TOKEN`, `FP_WORKSPACE`,
+`FP_PROJECT_ID`, and `FP_SERVER_URL`. The script resolves `origin/main`, refuses
+real launch from a dirty or unpushed checkout, sends FP REST env through Cursor
+SDK `cloud.envVars`, and asks the cloud worker to verify `.cursor` files,
+`bun --version`, `fp --version`, and `fp issue show` from `/tmp`.
+
+Current local status on 2026-05-26: `cursor-agent status` reports a logged-in
+user, but `cursor-agent models` fails because the macOS login keychain is
+locked. The SDK proof remains gated until `CURSOR_API_KEY` is exported or the
+Cursor credential path is unlocked.
