@@ -1,0 +1,14 @@
+{
+  "name": "@tarmac/cursor-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@cursor/sdk": "1.0.13",
+    "effect": "3.21.2"
+  }
+}
