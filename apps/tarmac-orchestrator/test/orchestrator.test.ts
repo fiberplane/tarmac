@@ -1,14 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
-import type {
-  CursorClient,
-  CursorDispatchRequest,
-  CursorRunReference,
-  CursorRunSnapshot,
+import {
+  inferCursorRunUrl,
+  type CursorClient,
+  type CursorDispatchRequest,
+  type CursorRunReference,
+  type CursorRunSnapshot,
 } from "@tarmac/cursor-client";
 import type { TarmacIssueUpdate } from "@tarmac/fp-domain";
 
 import { TarmacOrchestrator, type FpClient, type OrchestratorIssue } from "../src";
+
+const testCursorUrl = inferCursorRunUrl("bc-00000000-0000-4000-8000-000000000001");
 
 class MemoryFpClient implements FpClient {
   readonly #issues = new Map<string, OrchestratorIssue>();
@@ -139,7 +142,7 @@ const issue = (overrides: Partial<OrchestratorIssue> = {}): OrchestratorIssue =>
 });
 
 const repository = {
-  remoteUrl: "https://github.com/fiberplane/tarmac.git",
+  remoteUrl: "https://github.com/example-org/tarmac.git",
   baseBranch: "main",
   baseSha: "abc123",
 };
@@ -183,7 +186,7 @@ describe("TarmacOrchestrator", () => {
       }),
     ]);
     const cursorClient = new CapturingCursorClient({
-      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+      prUrl: "https://github.com/example-org/tarmac/pull/1",
     });
     const orchestrator = new TarmacOrchestrator({
       fpClient,
@@ -193,7 +196,7 @@ describe("TarmacOrchestrator", () => {
       cursorEnvVars: {
         FP_REMOTE: "rest-api",
         FP_TOKEN: "fp_secret_456",
-        FP_WORKSPACE: "workspace",
+        FP_WORKSPACE: "fp-ws-fixture",
         FP_PROJECT_ID: "project",
         FP_SERVER_URL: "https://console.example",
       },
@@ -214,13 +217,13 @@ describe("TarmacOrchestrator", () => {
     expect(cursorClient.requests[0]?.prompt).not.toContain("FP_TOKEN");
     expect(cursorClient.requests[0]?.prompt).not.toContain("fp_secret_456");
     expect(cursorClient.requests[0]?.repository).toEqual({
-      url: "https://github.com/fiberplane/tarmac.git",
+      url: "https://github.com/example-org/tarmac.git",
       startingRef: "main",
     });
     expect(cursorClient.requests[0]?.envVars).toEqual({
       FP_REMOTE: "rest-api",
       FP_TOKEN: "fp_secret_456",
-      FP_WORKSPACE: "workspace",
+      FP_WORKSPACE: "fp-ws-fixture",
       FP_PROJECT_ID: "project",
       FP_SERVER_URL: "https://console.example",
     });
@@ -229,10 +232,12 @@ describe("TarmacOrchestrator", () => {
       tarmac_state: "end",
       tarmac_agent_id: "bc-00000000-0000-4000-8000-000000000001",
       tarmac_run_id: "run-00000000-0000-4000-8000-000000000001",
+      tarmac_cursor_url: testCursorUrl,
       tarmac_base_sha: "abc123",
       tarmac_branch: "cursor/TARM-1",
-      tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
+      tarmac_pr_url: "https://github.com/example-org/tarmac/pull/1",
     });
+    expect(updated.comments[0]?.body).toBe(`Tarmac launched a Cursor Cloud run: ${testCursorUrl}`);
   });
 
   test("moves a claimed issue to needs-attention when dispatch fails", async () => {
@@ -291,7 +296,7 @@ describe("TarmacOrchestrator", () => {
     const orchestrator = new TarmacOrchestrator({
       fpClient,
       cursorClient: new CapturingCursorClient({
-        prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+        prUrl: "https://github.com/example-org/tarmac/pull/1",
       }),
       repository,
       redaction: {
@@ -312,12 +317,14 @@ describe("TarmacOrchestrator", () => {
       tarmac_state: "needs-attention",
       tarmac_agent_id: "bc-00000000-0000-4000-8000-000000000001",
       tarmac_run_id: "run-00000000-0000-4000-8000-000000000001",
+      tarmac_cursor_url: testCursorUrl,
       tarmac_base_sha: "abc123",
       tarmac_branch: "cursor/TARM-1",
-      tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
+      tarmac_pr_url: "https://github.com/example-org/tarmac/pull/1",
       tarmac_last_error:
         "Cursor launched but FP metadata persistence failed: fp metadata write failed with [REDACTED_SECRET]=[REDACTED_VALUE]",
     });
+    expect(updated.comments[0]?.body).toContain(testCursorUrl);
     expect(updated.comments[0]?.body).toContain("Run metadata was recorded for reconciliation");
     expect(updated.comments[0]?.body).not.toContain("FP_TOKEN");
     expect(updated.comments[0]?.body).not.toContain("secret");
@@ -336,7 +343,7 @@ describe("TarmacOrchestrator", () => {
       }),
     ]);
     const cursorClient = new CapturingCursorClient({
-      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+      prUrl: "https://github.com/example-org/tarmac/pull/1",
     });
     await cursorClient.dispatch({
       name: "TARM-1",
@@ -354,16 +361,68 @@ describe("TarmacOrchestrator", () => {
 
     await orchestrator.reconcile("TARM-1");
 
-    expect((await fpClient.getIssue("issue-1")).properties).toMatchObject({
+    const reconciled = await fpClient.getIssue("issue-1");
+
+    expect(reconciled.properties).toMatchObject({
       tarmac_state: "end",
-      tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
+      tarmac_cursor_url: testCursorUrl,
+      tarmac_pr_url: "https://github.com/example-org/tarmac/pull/1",
     });
+    expect(reconciled.comments[0]?.body).toBe(
+      `Cursor run finished. Run: ${testCursorUrl}. PR: https://github.com/example-org/tarmac/pull/1`,
+    );
+  });
+
+  test("adds terminal reconcile context once when a launch comment already has the run link", async () => {
+    const fpClient = new MemoryFpClient([
+      issue({
+        status: "in-progress",
+        properties: {
+          tarmac_ready: "true",
+          tarmac_state: "active",
+          tarmac_agent_id: "bc-00000000-0000-4000-8000-000000000001",
+          tarmac_run_id: "run-00000000-0000-4000-8000-000000000001",
+          tarmac_cursor_url: testCursorUrl,
+        },
+        comments: [
+          {
+            author: "tarmac",
+            body: `Tarmac launched a Cursor Cloud run: ${testCursorUrl}`,
+          },
+        ],
+      }),
+    ]);
+    const cursorClient = new CapturingCursorClient({
+      prUrl: "https://github.com/example-org/tarmac/pull/1",
+    });
+    await cursorClient.dispatch({
+      name: "TARM-1",
+      prompt: "test",
+      repository: {
+        url: repository.remoteUrl,
+        startingRef: repository.baseBranch,
+      },
+    });
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient,
+      repository,
+    });
+
+    await orchestrator.reconcile("TARM-1");
+    await orchestrator.reconcile("TARM-1");
+
+    const comments = (await fpClient.getIssue("issue-1")).comments;
+    expect(comments).toHaveLength(2);
+    expect(comments[1]?.body).toBe(
+      `Cursor run finished. Run: ${testCursorUrl}. PR: https://github.com/example-org/tarmac/pull/1`,
+    );
   });
 
   test("watch dispatches eligible issues in a bounded polling loop", async () => {
     const fpClient = new MemoryFpClient([issue()]);
     const cursorClient = new CapturingCursorClient({
-      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+      prUrl: "https://github.com/example-org/tarmac/pull/1",
     });
     const orchestrator = new TarmacOrchestrator({
       fpClient,

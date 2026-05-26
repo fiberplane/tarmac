@@ -16,6 +16,7 @@ export const TarmacPropertyKey = Schema.Literal(
   "tarmac_claim_id",
   "tarmac_agent_id",
   "tarmac_run_id",
+  "tarmac_cursor_url",
   "tarmac_branch",
   "tarmac_pr_url",
   "tarmac_pr_number",
@@ -32,6 +33,7 @@ export const TARMAC_PROPERTY_KEYS: readonly TarmacPropertyKey[] = [
   "tarmac_claim_id",
   "tarmac_agent_id",
   "tarmac_run_id",
+  "tarmac_cursor_url",
   "tarmac_branch",
   "tarmac_pr_url",
   "tarmac_pr_number",
@@ -47,6 +49,7 @@ export type TarmacProperties = {
   readonly claimId?: string;
   readonly agentId?: string;
   readonly runId?: string;
+  readonly cursorUrl?: string;
   readonly branch?: string;
   readonly prUrl?: string;
   readonly prNumber?: string;

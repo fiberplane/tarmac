@@ -22,6 +22,12 @@ import {
 } from "@tarmac/worker-prompt";
 
 import {
+  cursorRunUrlFor,
+  formatLaunchCursorRunComment,
+  formatTerminalReconcileComment,
+  issueCommentsIncludeText,
+} from "./cursor-run-fp";
+import {
   ClaimLostError,
   IssueIneligibleError,
   IssueNotFoundError,
@@ -175,6 +181,7 @@ export class TarmacOrchestrator {
           claimedIssue.id,
           updateFromCursorRun(claimedIssue, cursorRun, this.#repository.baseSha),
         );
+        await this.#maybeCommentCursorRunLaunch(claimedIssue, cursorRun);
         return {
           issue: claimedIssue,
           claimId,
@@ -211,10 +218,9 @@ export class TarmacOrchestrator {
       agentId,
       runId,
     });
-    await this.#fpClient.updateIssue(
-      issue.id,
-      updateFromCursorRun(issue, cursorRun, this.#repository.baseSha),
-    );
+    const update = updateFromCursorRun(issue, cursorRun, this.#repository.baseSha);
+    await this.#fpClient.updateIssue(issue.id, update);
+    await this.#maybeCommentTerminalReconcile(issue, cursorRun, update);
 
     return {
       issue,
@@ -307,10 +313,43 @@ export class TarmacOrchestrator {
       status: "in-progress",
       properties: postLaunchFailureProperties(run, this.#repository.baseSha, lastError),
     });
+    const cursorUrl = cursorRunUrlFor(run);
     await this.#fpClient.commentIssue(
       issueId,
-      `Cursor launched, but Tarmac failed to persist terminal metadata. Run metadata was recorded for reconciliation: ${lastError}`,
+      `Cursor launched (${cursorUrl}), but Tarmac failed to persist terminal metadata. Run metadata was recorded for reconciliation: ${lastError}`,
     );
+  }
+
+  async #maybeCommentCursorRunLaunch(
+    issue: OrchestratorIssue,
+    run: CursorRunSnapshot,
+  ): Promise<void> {
+    const cursorUrl = cursorRunUrlFor(run);
+    const comment = formatLaunchCursorRunComment(cursorUrl);
+    if (issueCommentsIncludeText(issue, comment)) {
+      return;
+    }
+
+    await this.#fpClient.commentIssue(issue.id, comment);
+  }
+
+  async #maybeCommentTerminalReconcile(
+    issue: OrchestratorIssue,
+    run: CursorRunSnapshot,
+    update: TarmacIssueUpdate,
+  ): Promise<void> {
+    if (update.properties.tarmac_state !== "end") {
+      return;
+    }
+
+    const cursorUrl = cursorRunUrlFor(run);
+    const prUrl = update.properties.tarmac_pr_url ?? run.prUrl;
+    const comment = formatTerminalReconcileComment(cursorUrl, prUrl);
+    if (issueCommentsIncludeText(issue, comment)) {
+      return;
+    }
+
+    await this.#fpClient.commentIssue(issue.id, comment);
   }
 }
 
@@ -340,8 +379,7 @@ export const updateFromCursorRun = (
   const finishedWithoutPr = run.status === "finished" && !hasPrEvidence;
   const needsAttention = run.status === "error" || run.status === "cancelled" || finishedWithoutPr;
   const properties: Partial<Record<TarmacPropertyKey, string>> = {
-    tarmac_agent_id: run.agentId,
-    tarmac_run_id: run.runId,
+    ...cursorRunIdentityProperties(run),
     tarmac_base_sha: baseSha,
     tarmac_state: finishedWithPr ? "end" : needsAttention ? "needs-attention" : "active",
   };
@@ -371,8 +409,7 @@ const postLaunchFailureProperties = (
   lastError: string,
 ): Partial<Record<TarmacPropertyKey, string>> => {
   const properties: Partial<Record<TarmacPropertyKey, string>> = {
-    tarmac_agent_id: run.agentId,
-    tarmac_run_id: run.runId,
+    ...cursorRunIdentityProperties(run),
     tarmac_base_sha: baseSha,
     tarmac_state: "needs-attention",
     tarmac_last_error: lastError,
@@ -387,6 +424,14 @@ const postLaunchFailureProperties = (
 
   return properties;
 };
+
+const cursorRunIdentityProperties = (
+  run: CursorRunSnapshot,
+): Partial<Record<TarmacPropertyKey, string>> => ({
+  tarmac_agent_id: run.agentId,
+  tarmac_run_id: run.runId,
+  tarmac_cursor_url: cursorRunUrlFor(run),
+});
 
 const redactFailure = (cause: unknown, redaction: PromptRedactionConfig | undefined): string => {
   const rawMessage = cause instanceof Error ? cause.message : String(cause);

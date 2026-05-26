@@ -26,6 +26,7 @@ is recorded in `tarmac_*` properties:
 - `tarmac_claim_id`
 - `tarmac_agent_id`
 - `tarmac_run_id`
+- `tarmac_cursor_url`
 - `tarmac_branch`
 - `tarmac_pr_url`
 - `tarmac_pr_number`

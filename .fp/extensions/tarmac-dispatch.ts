@@ -76,6 +76,12 @@ const init: ExtensionInit = async (fp) => {
     display: fp.ui.properties.text(),
   });
 
+  await fp.issues.registerProperty("tarmac_cursor_url", {
+    label: "Cursor Run URL",
+    icon: "external-link",
+    display: fp.ui.properties.text(),
+  });
+
   await fp.issues.registerProperty("tarmac_branch", {
     label: "Tarmac Branch",
     icon: "git-branch",

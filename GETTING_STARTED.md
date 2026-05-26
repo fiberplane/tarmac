@@ -29,9 +29,9 @@ fp tree
 ## How the loop works
 
 1. A human marks an FP issue ready for dispatch using the canonical wire value `tarmac_ready=true` (status `todo`, dependencies satisfied). In the FP desktop UI the same gate may appear as labels such as **Ready** / **Not Ready**—those are display text only. Do not write `tarmac_ready=Ready` from agents or scripts.
-2. The **orchestrator** scans eligible issues, claims them, launches Cursor (fake or real), and writes pre-handoff `tarmac_*` fields.
+2. The **orchestrator** scans eligible issues, claims them, launches Cursor (fake or real), and writes pre-handoff `tarmac_*` fields including `tarmac_cursor_url` (an inferred link derived from the Cursor agent id; see `packages/cursor-client/src/run-url.ts`).
 3. After handoff, the **Cursor worker** owns branch/PR creation, verification, FP comments, and terminal `tarmac_*` / status updates.
-4. **Reconcile** observes terminal Cursor runs when the worker has not finished FP updates.
+4. **Reconcile** observes terminal Cursor runs when the worker has not finished FP updates, refreshes `tarmac_cursor_url`, and posts a terminal run/PR comment when appropriate (without duplicating an identical run-link comment).
 
 Writer boundaries and the full property table: [docs/architecture/fp-boundary.md](docs/architecture/fp-boundary.md).
 

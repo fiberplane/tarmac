@@ -116,6 +116,7 @@ export const decodeTarmacProperties = (
   setIfPresent(textProperties, properties, "tarmac_claim_id", "claimId", failures);
   setIfPresent(textProperties, properties, "tarmac_agent_id", "agentId", failures);
   setIfPresent(textProperties, properties, "tarmac_run_id", "runId", failures);
+  setIfPresent(textProperties, properties, "tarmac_cursor_url", "cursorUrl", failures);
   setIfPresent(textProperties, properties, "tarmac_branch", "branch", failures);
   setIfPresent(textProperties, properties, "tarmac_pr_url", "prUrl", failures);
   setIfPresent(textProperties, properties, "tarmac_pr_number", "prNumber", failures);
@@ -159,6 +160,9 @@ export const encodeTarmacProperties = (
   }
   if (properties.runId !== undefined) {
     encoded.tarmac_run_id = properties.runId;
+  }
+  if (properties.cursorUrl !== undefined) {
+    encoded.tarmac_cursor_url = properties.cursorUrl;
   }
   if (properties.branch !== undefined) {
     encoded.tarmac_branch = properties.branch;
