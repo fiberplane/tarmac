@@ -1,6 +1,7 @@
 ---
 name: Cursor Cloud bootstrap and FP REST secret delivery proof
 requires:
+  - TARMAC_CURSOR_BOOTSTRAP_E2E
   - CURSOR_API_KEY
   - FP_TOKEN
   - FP_WORKSPACE

@@ -49,5 +49,5 @@ SDK `cloud.envVars`, and asks the cloud worker to verify `.cursor` files,
 
 Current local status on 2026-05-26: `cursor-agent status` reports a logged-in
 user, but `cursor-agent models` fails because the macOS login keychain is
-locked. The SDK proof remains gated until `CURSOR_API_KEY` is exported or the
-Cursor credential path is unlocked.
+locked. This proof requires an exported `CURSOR_API_KEY`; the CLI keychain path
+is only useful as separate operational context.
