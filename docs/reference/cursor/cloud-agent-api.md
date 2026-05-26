@@ -59,3 +59,9 @@ Cursor repository access is currently the gating external integration. The
 on 2026-05-26. A private fallback repo at `brettimus/tarmac` is pushed as the
 local `cursor` remote and is visible to Cursor; run live proofs with
 `CURSOR_REMOTE_NAME=cursor` until the canonical org repo is connected.
+
+Live proof status on 2026-05-26: passed against the `cursor` remote. Run
+`bc-c8c2a71a-c559-49e5-80ef-8652317e160d/run-48d5f049-95a5-480a-b07f-d8710fcb68e3`
+finished and returned the expected `BOOTSTRAP_SMOKE_OK` JSON marker after
+verifying repo-local Cursor files, `bun`, `fp`, and FP REST/no-clone issue read
+from `/tmp`.
