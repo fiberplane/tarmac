@@ -42,13 +42,20 @@ bun run e2e:cursor-bootstrap
 ```
 
 Required env names are `CURSOR_API_KEY`, `FP_TOKEN`, `FP_WORKSPACE`,
-`FP_PROJECT_ID`, and `FP_SERVER_URL`. The script resolves `origin/main`, refuses
-real launch from a dirty or unpushed checkout, starts Cursor from the verified
-branch name, sends FP REST env through Cursor SDK `cloud.envVars`, and asks the
-cloud worker to verify `.cursor` files,
+`FP_PROJECT_ID`, and `FP_SERVER_URL`. The script resolves
+`CURSOR_REMOTE_NAME/main` (default `origin/main`), refuses real launch from a
+dirty or unpushed checkout, starts Cursor from the verified branch name, sends
+FP REST env through Cursor SDK `cloud.envVars`, and asks the cloud worker to
+verify `.cursor` files,
 `bun --version`, `fp --version`, and `fp issue show` from `/tmp`.
 
 Current local status on 2026-05-26: `cursor-agent status` reports a logged-in
 user, but `cursor-agent models` fails because the macOS login keychain is
 locked. This proof requires an exported `CURSOR_API_KEY`; the CLI keychain path
 is only useful as separate operational context.
+
+Cursor repository access is currently the gating external integration. The
+`fiberplane/tarmac` private repo exists, but the Cursor account did not list it
+on 2026-05-26. A private fallback repo at `brettimus/tarmac` is pushed as the
+local `cursor` remote and is visible to Cursor; run live proofs with
+`CURSOR_REMOTE_NAME=cursor` until the canonical org repo is connected.

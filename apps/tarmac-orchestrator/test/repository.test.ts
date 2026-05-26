@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseDirtyFiles, parseLsRemoteOutput } from "../src";
+import { parseDirtyFiles, parseLsRemoteOutput, resolveRepositoryRemoteName } from "../src";
 
 describe("repository context", () => {
   test("parses the sha from ls-remote output", () => {
@@ -20,5 +20,13 @@ describe("repository context", () => {
       "tsconfig.json",
       "rules/new-rule.yml",
     ]);
+  });
+
+  test("resolves the Cursor-visible git remote with option over env over origin", () => {
+    expect(resolveRepositoryRemoteName({}, {})).toBe("origin");
+    expect(resolveRepositoryRemoteName({}, { CURSOR_REMOTE_NAME: "cursor" })).toBe("cursor");
+    expect(
+      resolveRepositoryRemoteName({ remoteName: "review" }, { CURSOR_REMOTE_NAME: "cursor" }),
+    ).toBe("review");
   });
 });

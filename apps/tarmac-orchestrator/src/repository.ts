@@ -45,7 +45,13 @@ const runGit = async (args: readonly string[], cwd: string): Promise<string> => 
 export type RepositoryContextOptions = {
   readonly baseRef?: string;
   readonly requireLocalHeadAtRemote?: boolean;
+  readonly remoteName?: string;
 };
+
+export const resolveRepositoryRemoteName = (
+  options: RepositoryContextOptions = {},
+  env: NodeJS.ProcessEnv = process.env,
+): string => options.remoteName ?? env.CURSOR_REMOTE_NAME ?? "origin";
 
 export const parseLsRemoteOutput = (output: string): string | undefined => {
   const firstLine = output
@@ -89,14 +95,15 @@ export const readRepositoryContext = async (
   options: RepositoryContextOptions = {},
 ): Promise<WorkerRepositoryContext> => {
   const baseRef = options.baseRef ?? process.env.CURSOR_BASE_REF ?? "main";
+  const remoteName = resolveRepositoryRemoteName(options);
   const [remoteUrl, lsRemoteOutput] = await Promise.all([
-    runGit(["remote", "get-url", "origin"], cwd),
-    runGit(["ls-remote", "origin", baseRef], cwd),
+    runGit(["remote", "get-url", remoteName], cwd),
+    runGit(["ls-remote", remoteName, baseRef], cwd),
   ]);
   const remoteSha = parseLsRemoteOutput(lsRemoteOutput);
   if (remoteSha === undefined) {
     throw new RemoteRefNotFoundError({
-      remote: "origin",
+      remote: remoteName,
       ref: baseRef,
     });
   }
