@@ -23,6 +23,7 @@ is recorded in `tarmac_*` properties:
 
 - `tarmac_state`
 - `tarmac_attempt`
+- `tarmac_claim_id`
 - `tarmac_agent_id`
 - `tarmac_run_id`
 - `tarmac_branch`
@@ -61,10 +62,16 @@ must not depend on a local `.fp` directory.
 
 ### D4. The worker owns PR completion after handoff
 
-After the Cursor run starts successfully, the worker owns branch, PR, verification
-evidence, FP progress comments, PR metadata, and terminal issue state. The
-orchestrator may reconcile and report observed Cursor failures, but it should not
-overwrite successful worker-owned PR metadata.
+After the Cursor run starts successfully, Cursor owns the remote branch/PR
+artifact and the worker owns verification evidence, FP progress comments, PR
+metadata, and terminal issue state.
+
+For the first real demo, use Cursor `autoCreatePR` where available. The worker
+records the Cursor-created PR URL in FP. A separate `gh`-driven PR path is
+allowed only behind a GitHub-token provisioning gate.
+
+The orchestrator may reconcile and report observed Cursor failures, but it
+should not overwrite successful worker-owned PR metadata.
 
 This intentionally follows the remote-PR shape from Switchyard's remote sandbox
 proposal and supersedes the older archive/bundle artifact model.
@@ -110,4 +117,5 @@ Negative:
   directory.
 - Implement a fake Cursor client first, then gate real Cursor calls behind env.
 - Add webhook support only after polling works.
-- Create a GitHub repo before the first real Cursor Cloud Agent launch.
+- Keep `fiberplane/tarmac` pushed and verify required files exist on the remote
+  before every real Cursor launch.

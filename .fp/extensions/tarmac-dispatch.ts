@@ -58,6 +58,12 @@ const init: ExtensionInit = async (fp) => {
     display: fp.ui.properties.text(),
   });
 
+  await fp.issues.registerProperty("tarmac_claim_id", {
+    label: "Tarmac Claim ID",
+    icon: "fingerprint",
+    display: fp.ui.properties.text(),
+  });
+
   await fp.issues.registerProperty("tarmac_agent_id", {
     label: "Cursor Agent ID",
     icon: "bot",

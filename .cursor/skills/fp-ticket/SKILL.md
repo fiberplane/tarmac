@@ -22,8 +22,10 @@ Load these only when needed:
 
 - Use REST fp from a non-repo directory. Do not rely on local `.fp` project state in the checkout.
 - Never print tokens or write credentials into repo files, shell profiles, git remotes, artifacts, PR text, or issue comments.
-- Prefer `gh` for GitHub PR creation, checks, review comments, and PR updates.
-- Open a full non-draft PR unless the user explicitly asks for a draft.
+- For Tarmac's first demo path, prefer Cursor's auto-created PR and record its
+  URL in FP. Use `gh` for PR creation only when the prompt explicitly says
+  GitHub credentials are provisioned for the worker.
+- Ensure there is a full non-draft PR unless the user explicitly asks for a draft.
 - Babysitting is required. Do not stop at PR creation if checks/reviews are still actionable.
 - Preserve unrelated user/author changes when continuing an existing branch or PR.
 - Use package scripts from `package.json`; do not invent parallel commands when scripts exist.
@@ -43,7 +45,12 @@ Load these only when needed:
 
 3. **Prepare branch and coordinate**
    - In the repo checkout, read `AGENTS.md` and relevant package docs.
-   - Branch from current `main`, unless the prompt says to continue an existing branch or PR.
+   - If the prompt includes `tarmac_base_sha`, fetch and checkout that exact
+     commit before editing. Verify `git rev-parse HEAD` matches it. If it does
+     not match, stop and report `needs-attention` through FP instead of working
+     from moving `main`.
+   - Branch from the pinned base SHA, unless the prompt says to continue an
+     existing branch or PR.
    - After the branch is real, comment on the fp issue with Cursor as provider, target issue(s), branch, and known PR if one already exists.
 
 4. **Implement**
