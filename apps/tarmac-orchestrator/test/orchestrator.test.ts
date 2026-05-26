@@ -373,7 +373,7 @@ describe("TarmacOrchestrator", () => {
     );
   });
 
-  test("does not duplicate terminal reconcile comments when the run link is already present", async () => {
+  test("adds terminal reconcile context once when a launch comment already has the run link", async () => {
     const fpClient = new MemoryFpClient([
       issue({
         status: "in-progress",
@@ -412,7 +412,11 @@ describe("TarmacOrchestrator", () => {
     await orchestrator.reconcile("TARM-1");
     await orchestrator.reconcile("TARM-1");
 
-    expect((await fpClient.getIssue("issue-1")).comments).toHaveLength(1);
+    const comments = (await fpClient.getIssue("issue-1")).comments;
+    expect(comments).toHaveLength(2);
+    expect(comments[1]?.body).toBe(
+      `Cursor run finished. Run: ${testCursorUrl}. PR: https://github.com/example-org/tarmac/pull/1`,
+    );
   });
 
   test("watch dispatches eligible issues in a bounded polling loop", async () => {

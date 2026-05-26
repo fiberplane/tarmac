@@ -25,7 +25,7 @@ import {
   cursorRunUrlFor,
   formatLaunchCursorRunComment,
   formatTerminalReconcileComment,
-  issueCommentsIncludeUrl,
+  issueCommentsIncludeText,
 } from "./cursor-run-fp";
 import {
   ClaimLostError,
@@ -325,11 +325,12 @@ export class TarmacOrchestrator {
     run: CursorRunSnapshot,
   ): Promise<void> {
     const cursorUrl = cursorRunUrlFor(run);
-    if (issueCommentsIncludeUrl(issue, cursorUrl)) {
+    const comment = formatLaunchCursorRunComment(cursorUrl);
+    if (issueCommentsIncludeText(issue, comment)) {
       return;
     }
 
-    await this.#fpClient.commentIssue(issue.id, formatLaunchCursorRunComment(cursorUrl));
+    await this.#fpClient.commentIssue(issue.id, comment);
   }
 
   async #maybeCommentTerminalReconcile(
@@ -342,12 +343,13 @@ export class TarmacOrchestrator {
     }
 
     const cursorUrl = cursorRunUrlFor(run);
-    if (issueCommentsIncludeUrl(issue, cursorUrl)) {
+    const prUrl = update.properties.tarmac_pr_url ?? run.prUrl;
+    const comment = formatTerminalReconcileComment(cursorUrl, prUrl);
+    if (issueCommentsIncludeText(issue, comment)) {
       return;
     }
 
-    const prUrl = update.properties.tarmac_pr_url ?? run.prUrl;
-    await this.#fpClient.commentIssue(issue.id, formatTerminalReconcileComment(cursorUrl, prUrl));
+    await this.#fpClient.commentIssue(issue.id, comment);
   }
 }
 

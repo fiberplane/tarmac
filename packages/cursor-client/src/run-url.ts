@@ -5,4 +5,4 @@
  * publishes an official run link field or documented URL pattern.
  */
 export const inferCursorRunUrl = (agentId: string): string =>
-  `https://cursor.com/agents?id=${encodeURIComponent(agentId)}`;
+  `https://cursor.com/agents/${encodeURIComponent(agentId)}`;

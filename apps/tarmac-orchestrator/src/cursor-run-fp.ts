@@ -5,8 +5,8 @@ import type { OrchestratorIssue } from "./fp-client";
 
 export const cursorRunUrlFor = (run: CursorRunSnapshot): string => inferCursorRunUrl(run.agentId);
 
-export const issueCommentsIncludeUrl = (issue: OrchestratorIssue, url: string): boolean =>
-  issue.comments.some((comment) => comment.body.includes(url));
+export const issueCommentsIncludeText = (issue: OrchestratorIssue, text: string): boolean =>
+  issue.comments.some((comment) => comment.body.includes(text));
 
 export const formatLaunchCursorRunComment = (cursorUrl: string): string =>
   `Tarmac launched a Cursor Cloud run: ${cursorUrl}`;
