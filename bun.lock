@@ -15,6 +15,19 @@
         "oxlint": "1.58.0",
       },
     },
+    "apps/tarmac-orchestrator": {
+      "name": "@tarmac/orchestrator",
+      "version": "0.0.1",
+      "bin": {
+        "tarmac": "./src/cli.ts",
+      },
+      "dependencies": {
+        "@tarmac/cursor-client": "workspace:*",
+        "@tarmac/fp-domain": "workspace:*",
+        "@tarmac/worker-prompt": "workspace:*",
+        "effect": "3.21.2",
+      },
+    },
     "packages/cursor-client": {
       "name": "@tarmac/cursor-client",
       "version": "0.0.1",
@@ -170,6 +183,8 @@
     "@tarmac/cursor-client": ["@tarmac/cursor-client@workspace:packages/cursor-client"],
 
     "@tarmac/fp-domain": ["@tarmac/fp-domain@workspace:packages/fp-domain"],
+
+    "@tarmac/orchestrator": ["@tarmac/orchestrator@workspace:apps/tarmac-orchestrator"],
 
     "@tarmac/qa": ["@tarmac/qa@workspace:packages/qa"],
 
