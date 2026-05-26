@@ -102,6 +102,12 @@ Docs rot when they describe code that changed. To mitigate:
 
 ## Index
 
+### Root entry points
+
+| Doc                                            | Topic                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------ |
+| [../GETTING_STARTED.md](../GETTING_STARTED.md) | Operator and agent first-run: install, FP link, orchestrator CLI, Cursor setup |
+
 ### patterns/
 
 | Doc                                               | Topic                                                      |

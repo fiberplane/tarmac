@@ -2,7 +2,7 @@
 
 Tarmac is an FP + Cursor Cloud Agent prototype. The demo target is:
 
-1. A human marks an FP issue with `tarmac_ready=Ready` in the desktop app.
+1. A human marks an FP issue ready for dispatch (`tarmac_ready=true`; the desktop UI may show **Ready** / **Not Ready** as labels only).
 2. A Tarmac orchestrator detects the eligible issue.
 3. The orchestrator dispatches a Cursor Cloud Agent with FP no-clone REST context.
 4. The Cursor worker pushes a branch, opens a PR, records FP metadata, and closes
@@ -11,6 +11,21 @@ Tarmac is an FP + Cursor Cloud Agent prototype. The demo target is:
 This intentionally deviates from Symphony's Codex app-server runtime. The
 tracker and scheduler shape stays Symphony-inspired; the runner becomes Cursor's
 durable cloud-agent API and GitHub PR workflow.
+
+## Getting Started
+
+**[GETTING_STARTED.md](GETTING_STARTED.md)** — install, FP project link, orchestrator commands (`scan`, `run-one`, `watch`, `reconcile`), fake vs real Cursor mode, REST env setup, and adding Tarmac to another repo.
+
+Fast path:
+
+```bash
+bun install
+fp init -y          # if this repo is not yet an fp project
+fp tree             # inspect work
+bun run tarmac scan --cursor fake
+```
+
+Architecture: [docs/architecture/0001-cursor-backed-symphony-loop.md](docs/architecture/0001-cursor-backed-symphony-loop.md) · FP boundaries: [docs/architecture/fp-boundary.md](docs/architecture/fp-boundary.md)
 
 ## Setup
 

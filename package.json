@@ -14,6 +14,8 @@
     "format:check": "oxfmt --check .",
     "typecheck": "tsgo --noEmit",
     "check": "bun run lint && bun run lint:ast && bun run lint:drift && bun run typecheck",
+    "tarmac": "bun apps/tarmac-orchestrator/src/cli.ts",
+    "fp:rest-env": "bun ops/fp/print-rest-env.ts",
     "e2e:fp-rest": "bun ops/fp/rest-no-clone-e2e.ts",
     "e2e:cursor-bootstrap": "bun ops/cursor/bootstrap-smoke-e2e.ts"
   },
