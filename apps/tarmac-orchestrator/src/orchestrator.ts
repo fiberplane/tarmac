@@ -159,7 +159,7 @@ export class TarmacOrchestrator {
           prompt,
           repository: {
             url: this.#repository.remoteUrl,
-            startingRef: this.#repository.baseSha,
+            startingRef: this.#repository.baseBranch,
           },
           autoCreatePR: true,
           idempotencyKey: claimId,

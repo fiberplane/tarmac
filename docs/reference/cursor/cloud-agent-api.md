@@ -43,8 +43,9 @@ bun run e2e:cursor-bootstrap
 
 Required env names are `CURSOR_API_KEY`, `FP_TOKEN`, `FP_WORKSPACE`,
 `FP_PROJECT_ID`, and `FP_SERVER_URL`. The script resolves `origin/main`, refuses
-real launch from a dirty or unpushed checkout, sends FP REST env through Cursor
-SDK `cloud.envVars`, and asks the cloud worker to verify `.cursor` files,
+real launch from a dirty or unpushed checkout, starts Cursor from the verified
+branch name, sends FP REST env through Cursor SDK `cloud.envVars`, and asks the
+cloud worker to verify `.cursor` files,
 `bun --version`, `fp --version`, and `fp issue show` from `/tmp`.
 
 Current local status on 2026-05-26: `cursor-agent status` reports a logged-in

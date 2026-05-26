@@ -215,7 +215,7 @@ describe("TarmacOrchestrator", () => {
     expect(cursorClient.requests[0]?.prompt).not.toContain("fp_secret_456");
     expect(cursorClient.requests[0]?.repository).toEqual({
       url: "https://github.com/fiberplane/tarmac.git",
-      startingRef: "abc123",
+      startingRef: "main",
     });
     expect(cursorClient.requests[0]?.envVars).toEqual({
       FP_REMOTE: "rest-api",
@@ -343,7 +343,7 @@ describe("TarmacOrchestrator", () => {
       prompt: "test",
       repository: {
         url: repository.remoteUrl,
-        startingRef: repository.baseSha,
+        startingRef: repository.baseBranch,
       },
     });
     const orchestrator = new TarmacOrchestrator({

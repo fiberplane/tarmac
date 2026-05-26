@@ -214,7 +214,7 @@ const main = async (): Promise<void> => {
     prompt: renderPrompt(issueId),
     repository: {
       url: repository.remoteUrl,
-      startingRef: repository.baseSha,
+      startingRef: repository.baseBranch,
     },
     autoCreatePR: false,
     ...(envVars === undefined ? {} : { envVars }),
