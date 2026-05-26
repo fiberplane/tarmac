@@ -65,3 +65,16 @@ Live proof status on 2026-05-26: passed against the `cursor` remote. Run
 finished and returned the expected `BOOTSTRAP_SMOKE_OK` JSON marker after
 verifying repo-local Cursor files, `bun`, `fp`, and FP REST/no-clone issue read
 from `/tmp`.
+
+## Tarmac Live Dispatch Proof
+
+Full property-triggered dispatch status on 2026-05-26: passed against the
+`cursor` remote. The FP issue `TARM-weeqzaxz` was made eligible by setting
+`tarmac_ready=true`; `tarmac run-one --cursor real` claimed it, launched Cursor
+run `bc-3d23cee8-0cbb-4987-b15b-ef74338806b1/run-668ab4dc-c708-4f90-82d3-a45bec90b107`,
+and `tarmac reconcile --cursor real` recorded terminal PR metadata.
+
+Resulting PR: https://github.com/brettimus/tarmac/pull/1. The PR added only
+`docs/demo/cursor-live-handoff-proof.md`, and the target FP issue ended with
+`tarmac_state=end`, branch `cursor/cursor-live-handoff-proof-06b1`, PR number
+`1`, and head SHA `17e51f3563f34c81f2364b6700b3ffc6d90fc551`.
