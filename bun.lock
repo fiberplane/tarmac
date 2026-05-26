@@ -34,6 +34,10 @@
       "name": "@tarmac/qa",
       "version": "0.0.0",
     },
+    "packages/worker-prompt": {
+      "name": "@tarmac/worker-prompt",
+      "version": "0.0.1",
+    },
   },
   "trustedDependencies": [
     "@ast-grep/cli",
@@ -168,6 +172,8 @@
     "@tarmac/fp-domain": ["@tarmac/fp-domain@workspace:packages/fp-domain"],
 
     "@tarmac/qa": ["@tarmac/qa@workspace:packages/qa"],
+
+    "@tarmac/worker-prompt": ["@tarmac/worker-prompt@workspace:packages/worker-prompt"],
 
     "@tootallnate/once": ["@tootallnate/once@1.1.2", "", {}, "sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw=="],
 
