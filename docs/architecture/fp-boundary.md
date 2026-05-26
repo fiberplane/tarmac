@@ -8,20 +8,21 @@ This document defines the FP side of Tarmac's dispatch contract.
 
 Source of truth: `.fp/extensions/tarmac-dispatch.ts`.
 
-| Property            | Type                                                 | Writer                                            | Meaning                           |
-| ------------------- | ---------------------------------------------------- | ------------------------------------------------- | --------------------------------- |
-| `tarmac_ready`      | select `true` / `false`                              | Human/planner                                     | Explicit dispatch gate.           |
-| `tarmac_state`      | select `idle` / `active` / `end` / `needs-attention` | Orchestrator before handoff; worker after handoff | Coarse human-visible run state.   |
-| `tarmac_attempt`    | text                                                 | Orchestrator                                      | Attempt counter.                  |
-| `tarmac_claim_id`   | text                                                 | Orchestrator                                      | Durable idempotent claim key.     |
-| `tarmac_agent_id`   | text                                                 | Orchestrator                                      | Cursor durable agent ID.          |
-| `tarmac_run_id`     | text                                                 | Orchestrator                                      | Cursor run ID.                    |
-| `tarmac_branch`     | text                                                 | Worker                                            | Git branch pushed by Cursor.      |
-| `tarmac_pr_url`     | text                                                 | Worker                                            | Durable GitHub PR artifact.       |
-| `tarmac_pr_number`  | text                                                 | Worker                                            | Numeric GitHub PR number as text. |
-| `tarmac_base_sha`   | text                                                 | Orchestrator or worker                            | Pinned base revision.             |
-| `tarmac_head_sha`   | text                                                 | Worker                                            | Latest pushed head revision.      |
-| `tarmac_last_error` | text                                                 | Orchestrator or worker                            | Redacted failure summary.         |
+| Property            | Type                                                 | Writer                                            | Meaning                                                                                            |
+| ------------------- | ---------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `tarmac_ready`      | select `true` / `false`                              | Human/planner                                     | Explicit dispatch gate.                                                                            |
+| `tarmac_state`      | select `idle` / `active` / `end` / `needs-attention` | Orchestrator before handoff; worker after handoff | Coarse human-visible run state.                                                                    |
+| `tarmac_attempt`    | text                                                 | Orchestrator                                      | Attempt counter.                                                                                   |
+| `tarmac_claim_id`   | text                                                 | Orchestrator                                      | Durable idempotent claim key.                                                                      |
+| `tarmac_agent_id`   | text                                                 | Orchestrator                                      | Cursor durable agent ID.                                                                           |
+| `tarmac_run_id`     | text                                                 | Orchestrator                                      | Cursor run ID.                                                                                     |
+| `tarmac_cursor_url` | text                                                 | Orchestrator                                      | Inferred Cursor Cloud run URL (from `tarmac_agent_id`; not an official Cursor deep-link contract). |
+| `tarmac_branch`     | text                                                 | Worker                                            | Git branch pushed by Cursor.                                                                       |
+| `tarmac_pr_url`     | text                                                 | Worker                                            | Durable GitHub PR artifact.                                                                        |
+| `tarmac_pr_number`  | text                                                 | Worker                                            | Numeric GitHub PR number as text.                                                                  |
+| `tarmac_base_sha`   | text                                                 | Orchestrator or worker                            | Pinned base revision.                                                                              |
+| `tarmac_head_sha`   | text                                                 | Worker                                            | Latest pushed head revision.                                                                       |
+| `tarmac_last_error` | text                                                 | Orchestrator or worker                            | Redacted failure summary.                                                                          |
 
 ## Eligibility
 
@@ -46,13 +47,13 @@ write a new `tarmac_claim_id` before relaunch.
 
 ## State Machine
 
-| State                  | Required fields                                                          | Meaning                                                                                 | Next states                              |
-| ---------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- | ---------------------------------------- |
-| `idle`                 | none                                                                     | Human-visible default before claim.                                                     | `active`, `needs-attention`              |
-| `active` before launch | `tarmac_claim_id`, `tarmac_attempt`                                      | Orchestrator has claimed and is preparing Cursor launch.                                | `active` with run IDs, `needs-attention` |
-| `active` after launch  | `tarmac_claim_id`, `tarmac_agent_id`, `tarmac_run_id`, `tarmac_base_sha` | Cursor run exists or is being reconciled.                                               | `end`, `needs-attention`                 |
-| `end`                  | `tarmac_pr_url` or terminal worker comment                               | Worker reported success or durable PR handoff.                                          | none unless human reopens                |
-| `needs-attention`      | `tarmac_last_error`                                                      | Launch, Cursor, FP REST, verification, cancellation, expiry, or worker handoff failure. | `active` after human re-arm              |
+| State                  | Required fields                                                                               | Meaning                                                                                 | Next states                              |
+| ---------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `idle`                 | none                                                                                          | Human-visible default before claim.                                                     | `active`, `needs-attention`              |
+| `active` before launch | `tarmac_claim_id`, `tarmac_attempt`                                                           | Orchestrator has claimed and is preparing Cursor launch.                                | `active` with run IDs, `needs-attention` |
+| `active` after launch  | `tarmac_claim_id`, `tarmac_agent_id`, `tarmac_run_id`, `tarmac_cursor_url`, `tarmac_base_sha` | Cursor run exists or is being reconciled.                                               | `end`, `needs-attention`                 |
+| `end`                  | `tarmac_pr_url` or terminal worker comment                                                    | Worker reported success or durable PR handoff.                                          | none unless human reopens                |
+| `needs-attention`      | `tarmac_last_error`                                                                           | Launch, Cursor, FP REST, verification, cancellation, expiry, or worker handoff failure. | `active` after human re-arm              |
 
 Cursor `ERROR`, `EXPIRED`, and cancelled runs map to `needs-attention` unless
 the worker already wrote a successful PR handoff. Cursor `FINISHED` maps to
@@ -64,9 +65,9 @@ Before Cursor handoff, the orchestrator may:
 
 - claim the issue with `status=in-progress`;
 - set `tarmac_state=active`;
-- set `tarmac_attempt`, `tarmac_claim_id`, `tarmac_agent_id`, `tarmac_run_id`, and
-  `tarmac_base_sha`;
-- comment with a redacted launch summary.
+- set `tarmac_attempt`, `tarmac_claim_id`, `tarmac_agent_id`, `tarmac_run_id`,
+  `tarmac_cursor_url`, and `tarmac_base_sha`;
+- comment with the Cursor run URL (once per run) and a redacted launch summary when needed.
 
 After Cursor handoff, the worker owns:
 

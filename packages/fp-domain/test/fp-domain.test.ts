@@ -6,6 +6,7 @@ import {
   createClaimId,
   createClaimUpdate,
   decodeTarmacProperties,
+  encodeTarmacProperties,
   isEligible,
   SameProcessClaimSet,
   type TarmacIssue,
@@ -57,6 +58,7 @@ describe("decodeTarmacProperties", () => {
       tarmac_claim_id: "runner:2:claim",
       tarmac_agent_id: "bc-1",
       tarmac_run_id: "run-1",
+      tarmac_cursor_url: "https://cursor.com/agents?id=bc-1",
       tarmac_branch: "cursor/TARM-1",
       tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
       tarmac_pr_number: "1",
@@ -74,6 +76,7 @@ describe("decodeTarmacProperties", () => {
         claimId: "runner:2:claim",
         agentId: "bc-1",
         runId: "run-1",
+        cursorUrl: "https://cursor.com/agents?id=bc-1",
         branch: "cursor/TARM-1",
         prUrl: "https://github.com/fiberplane/tarmac/pull/1",
         prNumber: "1",
@@ -81,6 +84,22 @@ describe("decodeTarmacProperties", () => {
         headSha: "def",
         lastError: "redacted",
       },
+    });
+  });
+
+  test("encodes cursor run url metadata", () => {
+    expect(
+      encodeTarmacProperties({
+        ready: "true",
+        state: "active",
+        agentId: "bc-1",
+        runId: "run-1",
+        cursorUrl: "https://cursor.com/agents?id=bc-1",
+      }),
+    ).toMatchObject({
+      tarmac_agent_id: "bc-1",
+      tarmac_run_id: "run-1",
+      tarmac_cursor_url: "https://cursor.com/agents?id=bc-1",
     });
   });
 });

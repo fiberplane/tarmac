@@ -112,6 +112,7 @@ const probeValues = (): Readonly<Record<TarmacPropertyKey, string>> => {
     tarmac_claim_id: `rest-probe:1:${suffix}`,
     tarmac_agent_id: "bc-00000000-0000-4000-8000-000000000001",
     tarmac_run_id: "run-00000000-0000-4000-8000-000000000001",
+    tarmac_cursor_url: "https://cursor.com/agents?id=bc-00000000-0000-4000-8000-000000000001",
     tarmac_branch: `tarmac/rest-probe-${suffix}`,
     tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
     tarmac_pr_number: "1",
