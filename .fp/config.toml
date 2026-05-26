@@ -1,0 +1,8 @@
+# FP CLI Configuration
+
+project_id = "proj_01KSJF642C8WVFV6P2S9EBM6X9"
+prefix = "TARM"
+
+[extensions.check-before-done]
+# Default once dependencies are installed: "bun run check"
+checks = ""

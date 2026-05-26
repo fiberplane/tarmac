@@ -1,0 +1,29 @@
+# Git 2.54+ config-based hooks for tarmac.
+#
+# Wire these into your local git config (run once per clone, from any
+# worktree):
+#
+#     git config --local include.path "$(git rev-parse --show-toplevel)/.githooks/hooks.gitconfig"
+#
+# --local writes to the shared common config so a single setup applies
+# across every worktree. Each worktree still executes its own .githooks/
+# scripts (git sets CWD to the firing worktree's root). See
+# .githooks/README.md for per-worktree opt-in via extensions.worktreeConfig.
+#
+# Verify with: git hook list
+# Disable one locally: git config hook.<name>.enabled false
+# Bypass for one commit: git commit --no-verify
+#
+# See .githooks/README.md for details.
+
+[hook "oxlint-staged"]
+	event = pre-commit
+	command = .githooks/staged-oxlint.sh
+
+[hook "ast-grep-staged"]
+	event = pre-commit
+	command = .githooks/staged-astgrep.sh
+
+[hook "drift-lint"]
+	event = pre-push
+	command = .githooks/pre-push-drift.sh

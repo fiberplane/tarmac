@@ -1,0 +1,26 @@
+# Fiberplane local issue tracking - local DB and per-user state stay ignored,
+# but project config + extensions ship with the repo so the workflow is
+# reproducible for anyone cloning.
+.fp/*
+!.fp/config.toml
+!.fp/extensions/
+.fp/extensions/*
+!.fp/extensions/EXTENSIONS.md
+!.fp/extensions/*.ts
+.fp/extensions/tsconfig.json
+.fp/config.local.toml
+
+# Cursor/Tarmac runtime artifacts and secrets
+.tarmac/
+.cursor/secrets/
+.cursor/**/*.local.json
+.env
+.env.*
+!.env.example
+
+# Cloned upstream repos and local doc snapshots for agent reference
+references/
+
+# Dependencies/build output
+node_modules/
+dist/

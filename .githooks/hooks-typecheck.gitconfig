@@ -1,0 +1,18 @@
+# Opt-in: full-repo typecheck on pre-push.
+#
+# Slower (~30s) but catches type errors before they hit CI. Enable with:
+#
+#     git config --local --add include.path \
+#       "$(git rev-parse --show-toplevel)/.githooks/hooks-typecheck.gitconfig"
+#
+# Disable with the matching --unset (replace the path with whatever was
+# stored — check `git config --local --get-all include.path` first):
+#
+#     git config --local --unset include.path \
+#       "$(git rev-parse --show-toplevel)/.githooks/hooks-typecheck.gitconfig"
+#
+# See .githooks/README.md for details.
+
+[hook "typecheck"]
+	event = pre-push
+	command = .githooks/pre-push-typecheck.sh
