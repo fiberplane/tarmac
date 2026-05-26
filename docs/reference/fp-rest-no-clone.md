@@ -84,6 +84,9 @@ The script runs from `/tmp/tarmac-fp-rest-e2e`, forces `FP_REMOTE=rest-api`,
 writes every `tarmac_*` property, reads the issue back, verifies round-trip
 values, then restores originally present property values and clears properties
 that were absent before the probe. Cleanup is verified with a final read-back.
+Current FP REST clear behavior may return empty-string tombstones for cleared
+properties, so the proof accepts `undefined` or `""` for properties that were
+absent before the probe. Run this only against a disposable issue.
 
 Current local status on 2026-05-26: this checkout has a valid FP auth token in
 the user credentials file, but the Tarmac project is not linked to a remote FP

@@ -97,7 +97,7 @@ const verifyRestored = (entries: readonly RestoreEntry[], restored: FpIssue): re
   entries.flatMap((entry) => {
     const restoredValue = restored.properties[entry.key];
     if (entry.originalValue === undefined) {
-      return restoredValue === undefined ? [] : [entry.key];
+      return restoredValue === undefined || restoredValue === "" ? [] : [entry.key];
     }
 
     return restoredValue === entry.originalValue ? [] : [entry.key];
