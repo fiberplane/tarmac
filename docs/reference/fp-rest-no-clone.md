@@ -69,3 +69,23 @@ FP_REMOTE=rest-api fp comment add "$ISSUE_ID" --file /tmp/evidence-comment.md
 ## Blockers
 
 If REST fp fails, verify the environment with non-secret checks such as `env | rg '^FP_(REMOTE|WORKSPACE|PROJECT_ID|PROJECT_PREFIX|SERVER_URL)='`. Report missing or invalid context without printing `FP_TOKEN`.
+
+## Tarmac Proof Script
+
+Tarmac includes a gated proof script:
+
+```bash
+TARMAC_FP_REST_E2E=1 \
+TARMAC_FP_REST_ISSUE_ID=TARM-... \
+bun run e2e:fp-rest
+```
+
+The script runs from `/tmp/tarmac-fp-rest-e2e`, forces `FP_REMOTE=rest-api`,
+writes every `tarmac_*` property, reads the issue back, verifies round-trip
+values, and restores the original property values.
+
+Current local status on 2026-05-26: this checkout has a valid FP auth token in
+the user credentials file, but the Tarmac project is not linked to a remote FP
+project and no `FP_*` REST environment variables are exported in this shell.
+The proof therefore remains gated until a remote project ID and REST token env
+are provided.

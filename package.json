@@ -13,7 +13,8 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "typecheck": "tsgo --noEmit",
-    "check": "bun run lint && bun run lint:ast && bun run lint:drift && bun run typecheck"
+    "check": "bun run lint && bun run lint:ast && bun run lint:drift && bun run typecheck",
+    "e2e:fp-rest": "bun ops/fp/rest-no-clone-e2e.ts"
   },
   "dependencies": {
     "effect": "3.21.2"
