@@ -9,6 +9,14 @@ export class CliUsageError extends Data.TaggedError("CliUsageError")<{
   }
 }
 
+export class MissingCursorWorkerEnvError extends Data.TaggedError("MissingCursorWorkerEnvError")<{
+  readonly names: readonly string[];
+}> {
+  get message(): string {
+    return `Missing required Cursor worker FP env names: ${this.names.join(", ")}`;
+  }
+}
+
 export class FpCliCommandError extends Data.TaggedError("FpCliCommandError")<{
   readonly args: readonly string[];
   readonly stderr?: string;
@@ -32,6 +40,33 @@ export class GitCommandError extends Data.TaggedError("GitCommandError")<{
     return this.stderr === undefined
       ? `Git command failed: ${command}`
       : `Git command failed: ${command}\n${this.stderr}`;
+  }
+}
+
+export class RemoteRefNotFoundError extends Data.TaggedError("RemoteRefNotFoundError")<{
+  readonly remote: string;
+  readonly ref: string;
+}> {
+  get message(): string {
+    return `Remote ref not found: ${this.remote} ${this.ref}`;
+  }
+}
+
+export class UncommittedLaunchFilesError extends Data.TaggedError("UncommittedLaunchFilesError")<{
+  readonly files: readonly string[];
+}> {
+  get message(): string {
+    return `Refusing real Cursor launch with uncommitted launch files: ${this.files.join(", ")}`;
+  }
+}
+
+export class UnpushedBaseError extends Data.TaggedError("UnpushedBaseError")<{
+  readonly localHead: string;
+  readonly remoteHead: string;
+  readonly ref: string;
+}> {
+  get message(): string {
+    return `Refusing real Cursor launch because local HEAD ${this.localHead} does not match remote ${this.ref} ${this.remoteHead}`;
   }
 }
 

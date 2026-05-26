@@ -3,6 +3,7 @@ import { createCursorSdkClient, createFakeCursorClient } from "@tarmac/cursor-cl
 
 import { CliUsageError } from "./errors";
 import { FpCliClient } from "./fp-client";
+import { buildCursorWorkerEnv, buildHostSecretRedaction, parseCursorMode } from "./launch-config";
 import { TarmacOrchestrator } from "./orchestrator";
 import { readRepositoryContext } from "./repository";
 
@@ -64,17 +65,23 @@ const writeJson = (value: unknown): void => {
 };
 
 const createOrchestrator = async (flags: ReadonlyMap<string, string | true>) => {
-  const cursorMode = flagString(flags, "cursor") ?? "fake";
-  if (cursorMode !== "fake" && cursorMode !== "real") {
+  const cursorMode = parseCursorMode(flagString(flags, "cursor"));
+  if (cursorMode === undefined) {
     throw new CliUsageError({
       messageText: "--cursor must be fake or real",
     });
   }
 
+  const cursorEnvVars = buildCursorWorkerEnv(cursorMode);
+
   return new TarmacOrchestrator({
     fpClient: new FpCliClient(process.cwd()),
     cursorClient: cursorMode === "real" ? createCursorSdkClient() : createFakeCursorClient(),
-    repository: await readRepositoryContext(process.cwd()),
+    repository: await readRepositoryContext(process.cwd(), {
+      requireLocalHeadAtRemote: cursorMode === "real",
+    }),
+    redaction: buildHostSecretRedaction(),
+    ...(cursorEnvVars === undefined ? {} : { cursorEnvVars }),
   });
 };
 

@@ -27,7 +27,11 @@ const makeRun = (overrides: Partial<Run> = {}): Run => ({
   ...overrides,
 });
 
-const makeAgent = (run: Run, onSend: (prompt: string, options: unknown) => void): SDKAgent => ({
+const makeAgent = (
+  run: Run,
+  onSend: (prompt: string, options: unknown) => void,
+  onDispose: () => void = () => {},
+): SDKAgent => ({
   agentId: run.agentId,
   model: undefined,
   send: async (message, options) => {
@@ -36,7 +40,9 @@ const makeAgent = (run: Run, onSend: (prompt: string, options: unknown) => void)
   },
   close: () => {},
   reload: async () => {},
-  [Symbol.asyncDispose]: async () => {},
+  [Symbol.asyncDispose]: async () => {
+    onDispose();
+  },
   listArtifacts: async () => [],
   downloadArtifact: async () => Buffer.from(""),
 });
@@ -113,9 +119,15 @@ describe("CursorSdkClient", () => {
     const run = makeRun({
       status: "running",
     });
-    const agent = makeAgent(run, (prompt, options) => {
-      calls.push({ kind: "send", prompt, options });
-    });
+    const agent = makeAgent(
+      run,
+      (prompt, options) => {
+        calls.push({ kind: "send", prompt, options });
+      },
+      () => {
+        calls.push({ kind: "dispose" });
+      },
+    );
     const agentNamespace: CursorAgentNamespace = {
       create: async (options) => {
         calls.push({ kind: "create", options });
@@ -176,6 +188,9 @@ describe("CursorSdkClient", () => {
         options: {
           idempotencyKey: "claim-1",
         },
+      },
+      {
+        kind: "dispose",
       },
     ]);
   });

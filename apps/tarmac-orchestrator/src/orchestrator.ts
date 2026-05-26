@@ -16,6 +16,7 @@ import {
 } from "@tarmac/fp-domain";
 import {
   renderWorkerPrompt,
+  redactSensitiveText,
   type PromptRedactionConfig,
   type WorkerRepositoryContext,
 } from "@tarmac/worker-prompt";
@@ -60,6 +61,7 @@ export type OrchestratorOptions = {
   readonly runnerId?: string;
   readonly claimSet?: SameProcessClaimSet;
   readonly redaction?: PromptRedactionConfig;
+  readonly cursorEnvVars?: Readonly<Record<string, string>>;
 };
 
 export class TarmacOrchestrator {
@@ -69,6 +71,7 @@ export class TarmacOrchestrator {
   readonly #runnerId: string;
   readonly #claimSet: SameProcessClaimSet;
   readonly #redaction: PromptRedactionConfig | undefined;
+  readonly #cursorEnvVars: Readonly<Record<string, string>> | undefined;
 
   constructor(options: OrchestratorOptions) {
     this.#fpClient = options.fpClient;
@@ -76,7 +79,8 @@ export class TarmacOrchestrator {
     this.#repository = options.repository;
     this.#runnerId = options.runnerId ?? `tarmac-${process.pid}`;
     this.#claimSet = options.claimSet ?? new SameProcessClaimSet();
-    this.#redaction = options.redaction;
+    this.#cursorEnvVars = options.cursorEnvVars;
+    this.#redaction = mergeRedaction(options.redaction, options.cursorEnvVars);
   }
 
   async scan(): Promise<ScanResult> {
@@ -134,41 +138,47 @@ export class TarmacOrchestrator {
     try {
       const claimId = await this.#claimIssue(issue);
       const claimedIssue = await this.#fpClient.getIssue(issue.id);
-      const prompt = renderWorkerPrompt({
-        issue: {
-          id: claimedIssue.id,
-          ...(claimedIssue.displayId === undefined ? {} : { displayId: claimedIssue.displayId }),
-          title: claimedIssue.title,
-          ...(claimedIssue.description === undefined
-            ? {}
-            : { description: claimedIssue.description }),
-          comments: claimedIssue.comments,
-        },
-        repository: this.#repository,
-        ...(this.#redaction === undefined ? {} : { redaction: this.#redaction }),
-      });
-      const cursorRun = await this.#cursorClient.dispatch({
-        name: `${claimedIssue.displayId ?? claimedIssue.id}: ${claimedIssue.title}`,
-        prompt,
-        repository: {
-          url: this.#repository.remoteUrl,
-          startingRef: this.#repository.baseSha,
-        },
-        autoCreatePR: true,
-        idempotencyKey: claimId,
-      });
+      try {
+        const prompt = renderWorkerPrompt({
+          issue: {
+            id: claimedIssue.id,
+            ...(claimedIssue.displayId === undefined ? {} : { displayId: claimedIssue.displayId }),
+            title: claimedIssue.title,
+            ...(claimedIssue.description === undefined
+              ? {}
+              : { description: claimedIssue.description }),
+            comments: claimedIssue.comments,
+          },
+          repository: this.#repository,
+          ...(this.#redaction === undefined ? {} : { redaction: this.#redaction }),
+        });
+        const cursorRun = await this.#cursorClient.dispatch({
+          name: `${claimedIssue.displayId ?? claimedIssue.id}: ${claimedIssue.title}`,
+          prompt,
+          repository: {
+            url: this.#repository.remoteUrl,
+            startingRef: this.#repository.baseSha,
+          },
+          autoCreatePR: true,
+          idempotencyKey: claimId,
+          ...(this.#cursorEnvVars === undefined ? {} : { envVars: this.#cursorEnvVars }),
+        });
 
-      await this.#fpClient.updateIssue(
-        claimedIssue.id,
-        updateFromCursorRun(cursorRun, this.#repository.baseSha),
-      );
+        await this.#fpClient.updateIssue(
+          claimedIssue.id,
+          updateFromCursorRun(claimedIssue, cursorRun, this.#repository.baseSha),
+        );
 
-      return {
-        issue: claimedIssue,
-        claimId,
-        prompt,
-        cursorRun,
-      };
+        return {
+          issue: claimedIssue,
+          claimId,
+          prompt,
+          cursorRun,
+        };
+      } catch (cause) {
+        await this.#recordDispatchFailure(claimedIssue.id, cause);
+        throw cause;
+      }
     } finally {
       this.#claimSet.release(issue.id);
     }
@@ -197,7 +207,7 @@ export class TarmacOrchestrator {
     });
     await this.#fpClient.updateIssue(
       issue.id,
-      updateFromCursorRun(cursorRun, this.#repository.baseSha),
+      updateFromCursorRun(issue, cursorRun, this.#repository.baseSha),
     );
 
     return {
@@ -262,6 +272,21 @@ export class TarmacOrchestrator {
 
     return claimId;
   }
+
+  async #recordDispatchFailure(issueId: string, cause: unknown): Promise<void> {
+    const lastError = redactFailure(cause, this.#redaction);
+    await this.#fpClient.updateIssue(issueId, {
+      status: "in-progress",
+      properties: {
+        tarmac_state: "needs-attention",
+        tarmac_last_error: lastError,
+      },
+    });
+    await this.#fpClient.commentIssue(
+      issueId,
+      `Tarmac dispatch failed before Cursor handoff: ${lastError}`,
+    );
+  }
 }
 
 const findIssue = (
@@ -278,19 +303,22 @@ const findIssue = (
     );
   });
 
-const terminalStatus = (status: CursorRunSnapshot["status"]): boolean =>
-  status === "finished" || status === "error" || status === "cancelled";
-
-const updateFromCursorRun = (run: CursorRunSnapshot, baseSha: string): TarmacIssueUpdate => {
+export const updateFromCursorRun = (
+  issue: OrchestratorIssue,
+  run: CursorRunSnapshot,
+  baseSha: string,
+): TarmacIssueUpdate => {
+  const decoded = decodeTarmacProperties(issue.properties);
+  const existingPrUrl = decoded.kind === "valid" ? decoded.properties.prUrl : undefined;
+  const hasPrEvidence = run.prUrl !== undefined || existingPrUrl !== undefined;
+  const finishedWithPr = run.status === "finished" && hasPrEvidence;
+  const finishedWithoutPr = run.status === "finished" && !hasPrEvidence;
+  const needsAttention = run.status === "error" || run.status === "cancelled" || finishedWithoutPr;
   const properties: Partial<Record<TarmacPropertyKey, string>> = {
     tarmac_agent_id: run.agentId,
     tarmac_run_id: run.runId,
     tarmac_base_sha: baseSha,
-    tarmac_state: terminalStatus(run.status)
-      ? run.status === "finished"
-        ? "end"
-        : "needs-attention"
-      : "active",
+    tarmac_state: finishedWithPr ? "end" : needsAttention ? "needs-attention" : "active",
   };
 
   if (run.branch !== undefined) {
@@ -299,9 +327,40 @@ const updateFromCursorRun = (run: CursorRunSnapshot, baseSha: string): TarmacIss
   if (run.prUrl !== undefined) {
     properties.tarmac_pr_url = run.prUrl;
   }
+  if (finishedWithoutPr) {
+    properties.tarmac_last_error = "Cursor run finished without PR metadata.";
+  }
+  if (run.status === "error" || run.status === "cancelled") {
+    properties.tarmac_last_error = `Cursor run ended with status ${run.status}.`;
+  }
 
   return {
-    status: run.status === "finished" ? "done" : "in-progress",
+    status: finishedWithPr ? "done" : "in-progress",
     properties,
+  };
+};
+
+const redactFailure = (cause: unknown, redaction: PromptRedactionConfig | undefined): string => {
+  const rawMessage = cause instanceof Error ? cause.message : String(cause);
+  const redacted = redactSensitiveText(rawMessage, redaction);
+  return redacted.length > 500 ? `${redacted.slice(0, 497)}...` : redacted;
+};
+
+const mergeRedaction = (
+  redaction: PromptRedactionConfig | undefined,
+  envVars: Readonly<Record<string, string>> | undefined,
+): PromptRedactionConfig | undefined => {
+  if (envVars === undefined) {
+    return redaction;
+  }
+
+  const envSecrets = Object.entries(envVars).map(([name, value]) => ({
+    name,
+    value,
+  }));
+
+  return {
+    forbiddenTerms: [...(redaction?.forbiddenTerms ?? []), ...Object.keys(envVars)],
+    secrets: [...(redaction?.secrets ?? []), ...envSecrets],
   };
 };

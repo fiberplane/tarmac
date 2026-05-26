@@ -66,16 +66,42 @@ const readIssue = async (issueId: string, cwd: string): Promise<FpIssue> =>
     JSON.parse(await runFp(["issue", "show", issueId, "--format", "json"], cwd)),
   );
 
-const valueForRestore = (
-  properties: Readonly<Record<string, unknown>>,
-  key: TarmacPropertyKey,
-): string => {
-  const value = properties[key];
-  return typeof value === "string" ? value : "";
+type RestoreEntry = {
+  readonly key: TarmacPropertyKey;
+  readonly originalValue?: string;
 };
+
+const restorePlan = (properties: Readonly<Record<string, unknown>>): readonly RestoreEntry[] =>
+  TARMAC_PROPERTY_KEYS.map((key) => {
+    const value = properties[key];
+    return typeof value === "string"
+      ? {
+          key,
+          originalValue: value,
+        }
+      : {
+          key,
+        };
+  });
 
 const propertyArgs = (values: Readonly<Record<TarmacPropertyKey, string>>): readonly string[] =>
   Object.entries(values).flatMap(([key, value]) => ["--property", `${key}=${value}`]);
+
+const restoreArgs = (entries: readonly RestoreEntry[]): readonly string[] =>
+  entries.flatMap((entry) => [
+    "--property",
+    entry.originalValue === undefined ? `${entry.key}=` : `${entry.key}=${entry.originalValue}`,
+  ]);
+
+const verifyRestored = (entries: readonly RestoreEntry[], restored: FpIssue): readonly string[] =>
+  entries.flatMap((entry) => {
+    const restoredValue = restored.properties[entry.key];
+    if (entry.originalValue === undefined) {
+      return restoredValue === undefined ? [] : [entry.key];
+    }
+
+    return restoredValue === entry.originalValue ? [] : [entry.key];
+  });
 
 const probeValues = (): Readonly<Record<TarmacPropertyKey, string>> => {
   const suffix = Date.now().toString();
@@ -120,9 +146,7 @@ const main = async (): Promise<void> => {
 
   const original = await readIssue(issueId, cwd);
   const probe = probeValues();
-  const restore = Object.fromEntries(
-    TARMAC_PROPERTY_KEYS.map((key) => [key, valueForRestore(original.properties, key)]),
-  ) as Readonly<Record<TarmacPropertyKey, string>>;
+  const restore = restorePlan(original.properties);
 
   try {
     await runFp(["issue", "update", issueId, ...propertyArgs(probe)], cwd);
@@ -135,8 +159,13 @@ const main = async (): Promise<void> => {
 
     writeOut(`PASS: FP REST round-tripped ${TARMAC_PROPERTY_KEYS.length} tarmac_* properties.`);
   } finally {
-    await runFp(["issue", "update", issueId, ...propertyArgs(restore)], cwd);
-    writeOut("Restored original tarmac_* property values.");
+    await runFp(["issue", "update", issueId, ...restoreArgs(restore)], cwd);
+    const restored = await readIssue(issueId, cwd);
+    const restoreMismatches = verifyRestored(restore, restored);
+    if (restoreMismatches.length > 0) {
+      fail(`FP REST cleanup failed for: ${restoreMismatches.join(", ")}`);
+    }
+    writeOut("Restored or cleared original tarmac_* property values.");
   }
 };
 

@@ -82,7 +82,8 @@ bun run e2e:fp-rest
 
 The script runs from `/tmp/tarmac-fp-rest-e2e`, forces `FP_REMOTE=rest-api`,
 writes every `tarmac_*` property, reads the issue back, verifies round-trip
-values, and restores the original property values.
+values, then restores originally present property values and clears properties
+that were absent before the probe. Cleanup is verified with a final read-back.
 
 Current local status on 2026-05-26: this checkout has a valid FP auth token in
 the user credentials file, but the Tarmac project is not linked to a remote FP

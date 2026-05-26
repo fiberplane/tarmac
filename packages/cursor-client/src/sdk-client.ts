@@ -60,16 +60,20 @@ export class CursorSdkClient implements CursorClient {
       },
     });
 
-    const run = await agent.send(
-      request.prompt,
-      request.idempotencyKey === undefined
-        ? undefined
-        : {
-            idempotencyKey: request.idempotencyKey,
-          },
-    );
+    try {
+      const run = await agent.send(
+        request.prompt,
+        request.idempotencyKey === undefined
+          ? undefined
+          : {
+              idempotencyKey: request.idempotencyKey,
+            },
+      );
 
-    return normalizeRun(run);
+      return normalizeRun(run);
+    } finally {
+      await agent[Symbol.asyncDispose]();
+    }
   }
 
   async getRun(reference: CursorRunReference): Promise<CursorRunSnapshot> {

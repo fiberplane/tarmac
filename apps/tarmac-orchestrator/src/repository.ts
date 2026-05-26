@@ -3,7 +3,12 @@ import { promisify } from "node:util";
 
 import type { WorkerRepositoryContext } from "@tarmac/worker-prompt";
 
-import { GitCommandError } from "./errors";
+import {
+  GitCommandError,
+  RemoteRefNotFoundError,
+  UncommittedLaunchFilesError,
+  UnpushedBaseError,
+} from "./errors";
 
 const execFileAsync = promisify(execFile);
 
@@ -37,10 +42,80 @@ const runGit = async (args: readonly string[], cwd: string): Promise<string> => 
   }
 };
 
+export type RepositoryContextOptions = {
+  readonly baseRef?: string;
+  readonly requireLocalHeadAtRemote?: boolean;
+};
+
+const LAUNCH_FILE_PATHS: readonly string[] = [
+  ".cursor",
+  ".fp",
+  "apps",
+  "packages",
+  "ops",
+  "docs",
+  "package.json",
+  "bun.lock",
+];
+
+export const parseLsRemoteOutput = (output: string): string | undefined => {
+  const firstLine = output
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line !== "");
+  return firstLine?.split(/\s+/)[0];
+};
+
+const assertLocalLaunchStatePushed = async (
+  cwd: string,
+  baseRef: string,
+  remoteSha: string,
+): Promise<void> => {
+  const status = await runGit(["status", "--porcelain", "--", ...LAUNCH_FILE_PATHS], cwd);
+  const dirtyFiles = status
+    .split("\n")
+    .map((line) => line.slice(3).trim())
+    .filter((line) => line !== "");
+  if (dirtyFiles.length > 0) {
+    throw new UncommittedLaunchFilesError({
+      files: dirtyFiles,
+    });
+  }
+
+  const localHead = await runGit(["rev-parse", "HEAD"], cwd);
+  if (localHead !== remoteSha) {
+    throw new UnpushedBaseError({
+      localHead,
+      remoteHead: remoteSha,
+      ref: baseRef,
+    });
+  }
+};
+
 export const readRepositoryContext = async (
   cwd: string = process.cwd(),
-): Promise<WorkerRepositoryContext> => ({
-  remoteUrl: await runGit(["remote", "get-url", "origin"], cwd),
-  baseBranch: await runGit(["rev-parse", "--abbrev-ref", "HEAD"], cwd),
-  baseSha: await runGit(["rev-parse", "HEAD"], cwd),
-});
+  options: RepositoryContextOptions = {},
+): Promise<WorkerRepositoryContext> => {
+  const baseRef = options.baseRef ?? process.env.CURSOR_BASE_REF ?? "main";
+  const [remoteUrl, lsRemoteOutput] = await Promise.all([
+    runGit(["remote", "get-url", "origin"], cwd),
+    runGit(["ls-remote", "origin", baseRef], cwd),
+  ]);
+  const remoteSha = parseLsRemoteOutput(lsRemoteOutput);
+  if (remoteSha === undefined) {
+    throw new RemoteRefNotFoundError({
+      remote: "origin",
+      ref: baseRef,
+    });
+  }
+
+  if (options.requireLocalHeadAtRemote === true) {
+    await assertLocalLaunchStatePushed(cwd, baseRef, remoteSha);
+  }
+
+  return {
+    remoteUrl,
+    baseBranch: baseRef,
+    baseSha: remoteSha,
+  };
+};

@@ -44,7 +44,19 @@ class MemoryFpClient implements FpClient {
     });
   }
 
-  async commentIssue(): Promise<void> {}
+  async commentIssue(issueId: string, comment: string): Promise<void> {
+    const issue = await this.getIssue(issueId);
+    this.#issues.set(issue.id, {
+      ...issue,
+      comments: [
+        ...issue.comments,
+        {
+          author: "tarmac",
+          body: comment,
+        },
+      ],
+    });
+  }
 
   #find(issueId: string): OrchestratorIssue | undefined {
     return Array.from(this.#issues.values()).find(
@@ -57,20 +69,33 @@ class CapturingCursorClient implements CursorClient {
   requests: CursorDispatchRequest[] = [];
   readonly #runs = new Map<string, CursorRunSnapshot>();
 
+  constructor(
+    private readonly options: {
+      readonly status?: CursorRunSnapshot["status"];
+      readonly prUrl?: string;
+      readonly failDispatch?: boolean;
+    } = {},
+  ) {}
+
   async dispatch(request: CursorDispatchRequest): Promise<CursorRunSnapshot> {
+    if (this.options.failDispatch === true) {
+      throw new Error("dispatch failed with FP_TOKEN=secret");
+    }
+
     this.requests.push(request);
+    const prUrl = this.options.prUrl;
     const run: CursorRunSnapshot = {
       agentId: "bc-00000000-0000-4000-8000-000000000001",
       runId: "run-00000000-0000-4000-8000-000000000001",
-      status: "finished",
+      status: this.options.status ?? "finished",
       repoUrl: request.repository.url,
       branch: "cursor/TARM-1",
-      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+      ...(prUrl === undefined ? {} : { prUrl }),
       branches: [
         {
           repoUrl: request.repository.url,
           branch: "cursor/TARM-1",
-          prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+          ...(prUrl === undefined ? {} : { prUrl }),
         },
       ],
     };
@@ -146,12 +171,21 @@ describe("TarmacOrchestrator", () => {
         description: "Do not leak fp_secret_456 or FP_TOKEN.",
       }),
     ]);
-    const cursorClient = new CapturingCursorClient();
+    const cursorClient = new CapturingCursorClient({
+      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+    });
     const orchestrator = new TarmacOrchestrator({
       fpClient,
       cursorClient,
       repository,
       runnerId: "runner",
+      cursorEnvVars: {
+        FP_REMOTE: "rest-api",
+        FP_TOKEN: "fp_secret_456",
+        FP_WORKSPACE: "workspace",
+        FP_PROJECT_ID: "project",
+        FP_SERVER_URL: "https://console.example",
+      },
       redaction: {
         secrets: [
           {
@@ -172,6 +206,13 @@ describe("TarmacOrchestrator", () => {
       url: "https://github.com/fiberplane/tarmac.git",
       startingRef: "abc123",
     });
+    expect(cursorClient.requests[0]?.envVars).toEqual({
+      FP_REMOTE: "rest-api",
+      FP_TOKEN: "fp_secret_456",
+      FP_WORKSPACE: "workspace",
+      FP_PROJECT_ID: "project",
+      FP_SERVER_URL: "https://console.example",
+    });
     expect(updated.status).toBe("done");
     expect(updated.properties).toMatchObject({
       tarmac_state: "end",
@@ -180,6 +221,55 @@ describe("TarmacOrchestrator", () => {
       tarmac_base_sha: "abc123",
       tarmac_branch: "cursor/TARM-1",
       tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
+    });
+  });
+
+  test("moves a claimed issue to needs-attention when dispatch fails", async () => {
+    const fpClient = new MemoryFpClient([issue()]);
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient: new CapturingCursorClient({
+        failDispatch: true,
+      }),
+      repository,
+      redaction: {
+        secrets: [
+          {
+            name: "FP_TOKEN",
+            value: "secret",
+          },
+        ],
+      },
+    });
+
+    await expect(orchestrator.runOne("TARM-1")).rejects.toThrow("dispatch failed");
+    const updated = await fpClient.getIssue("issue-1");
+
+    expect(updated.status).toBe("in-progress");
+    expect(updated.properties).toMatchObject({
+      tarmac_state: "needs-attention",
+      tarmac_last_error: "dispatch failed with [REDACTED_SECRET]=[REDACTED_VALUE]",
+    });
+    expect(updated.comments[0]?.body).toContain("Tarmac dispatch failed before Cursor handoff");
+    expect(updated.comments[0]?.body).not.toContain("FP_TOKEN");
+    expect(updated.comments[0]?.body).not.toContain("secret");
+  });
+
+  test("does not mark a finished Cursor run done without PR evidence", async () => {
+    const fpClient = new MemoryFpClient([issue()]);
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient: new CapturingCursorClient(),
+      repository,
+    });
+
+    await orchestrator.runOne("TARM-1");
+    const updated = await fpClient.getIssue("issue-1");
+
+    expect(updated.status).toBe("in-progress");
+    expect(updated.properties).toMatchObject({
+      tarmac_state: "needs-attention",
+      tarmac_last_error: "Cursor run finished without PR metadata.",
     });
   });
 
@@ -195,7 +285,9 @@ describe("TarmacOrchestrator", () => {
         },
       }),
     ]);
-    const cursorClient = new CapturingCursorClient();
+    const cursorClient = new CapturingCursorClient({
+      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+    });
     await cursorClient.dispatch({
       name: "TARM-1",
       prompt: "test",
@@ -220,7 +312,9 @@ describe("TarmacOrchestrator", () => {
 
   test("watch dispatches eligible issues in a bounded polling loop", async () => {
     const fpClient = new MemoryFpClient([issue()]);
-    const cursorClient = new CapturingCursorClient();
+    const cursorClient = new CapturingCursorClient({
+      prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+    });
     const orchestrator = new TarmacOrchestrator({
       fpClient,
       cursorClient,
