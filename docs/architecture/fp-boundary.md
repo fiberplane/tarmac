@@ -120,6 +120,9 @@ Required env:
 - `FP_WORKSPACE`
 - `FP_PROJECT_ID`
 - `FP_SERVER_URL`
+
+Optional env:
+
 - `FP_PROJECT_PREFIX=TARM`
 
 No FP token may appear in repo files, shell profiles, git remotes, PR text,

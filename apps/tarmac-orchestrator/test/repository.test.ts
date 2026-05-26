@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { parseLsRemoteOutput } from "../src";
+import { parseDirtyFiles, parseLsRemoteOutput } from "../src";
 
 describe("repository context", () => {
   test("parses the sha from ls-remote output", () => {
@@ -13,5 +13,12 @@ describe("repository context", () => {
 
   test("returns undefined for an empty remote ref result", () => {
     expect(parseLsRemoteOutput("")).toBeUndefined();
+  });
+
+  test("parses dirty files from whole-worktree status output", () => {
+    expect(parseDirtyFiles(" M tsconfig.json\n?? rules/new-rule.yml\n")).toEqual([
+      "tsconfig.json",
+      "rules/new-rule.yml",
+    ]);
   });
 });

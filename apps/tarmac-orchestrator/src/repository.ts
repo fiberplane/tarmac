@@ -47,17 +47,6 @@ export type RepositoryContextOptions = {
   readonly requireLocalHeadAtRemote?: boolean;
 };
 
-const LAUNCH_FILE_PATHS: readonly string[] = [
-  ".cursor",
-  ".fp",
-  "apps",
-  "packages",
-  "ops",
-  "docs",
-  "package.json",
-  "bun.lock",
-];
-
 export const parseLsRemoteOutput = (output: string): string | undefined => {
   const firstLine = output
     .split("\n")
@@ -66,16 +55,19 @@ export const parseLsRemoteOutput = (output: string): string | undefined => {
   return firstLine?.split(/\s+/)[0];
 };
 
+export const parseDirtyFiles = (statusOutput: string): readonly string[] =>
+  statusOutput
+    .split("\n")
+    .map((line) => line.slice(3).trim())
+    .filter((line) => line !== "");
+
 const assertLocalLaunchStatePushed = async (
   cwd: string,
   baseRef: string,
   remoteSha: string,
 ): Promise<void> => {
-  const status = await runGit(["status", "--porcelain", "--", ...LAUNCH_FILE_PATHS], cwd);
-  const dirtyFiles = status
-    .split("\n")
-    .map((line) => line.slice(3).trim())
-    .filter((line) => line !== "");
+  const status = await runGit(["status", "--porcelain", "--untracked-files=all"], cwd);
+  const dirtyFiles = parseDirtyFiles(status);
   if (dirtyFiles.length > 0) {
     throw new UncommittedLaunchFilesError({
       files: dirtyFiles,

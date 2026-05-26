@@ -12,6 +12,8 @@ import { TarmacOrchestrator, type FpClient, type OrchestratorIssue } from "../sr
 
 class MemoryFpClient implements FpClient {
   readonly #issues = new Map<string, OrchestratorIssue>();
+  failNextUpdateWhen: ((update: TarmacIssueUpdate) => boolean) | undefined;
+  #failedUpdate = false;
 
   constructor(issues: readonly OrchestratorIssue[]) {
     for (const issue of issues) {
@@ -33,6 +35,15 @@ class MemoryFpClient implements FpClient {
   }
 
   async updateIssue(issueId: string, update: TarmacIssueUpdate): Promise<void> {
+    if (
+      this.failNextUpdateWhen !== undefined &&
+      !this.#failedUpdate &&
+      this.failNextUpdateWhen(update)
+    ) {
+      this.#failedUpdate = true;
+      throw new Error("fp metadata write failed with FP_TOKEN=secret");
+    }
+
     const issue = await this.getIssue(issueId);
     this.#issues.set(issue.id, {
       ...issue,
@@ -271,6 +282,45 @@ describe("TarmacOrchestrator", () => {
       tarmac_state: "needs-attention",
       tarmac_last_error: "Cursor run finished without PR metadata.",
     });
+  });
+
+  test("records Cursor run ids when the post-launch FP metadata write fails", async () => {
+    const fpClient = new MemoryFpClient([issue()]);
+    fpClient.failNextUpdateWhen = (update) =>
+      update.properties.tarmac_agent_id !== undefined && update.properties.tarmac_state === "end";
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient: new CapturingCursorClient({
+        prUrl: "https://github.com/fiberplane/tarmac/pull/1",
+      }),
+      repository,
+      redaction: {
+        secrets: [
+          {
+            name: "FP_TOKEN",
+            value: "secret",
+          },
+        ],
+      },
+    });
+
+    await expect(orchestrator.runOne("TARM-1")).rejects.toThrow("fp metadata write failed");
+    const updated = await fpClient.getIssue("issue-1");
+
+    expect(updated.status).toBe("in-progress");
+    expect(updated.properties).toMatchObject({
+      tarmac_state: "needs-attention",
+      tarmac_agent_id: "bc-00000000-0000-4000-8000-000000000001",
+      tarmac_run_id: "run-00000000-0000-4000-8000-000000000001",
+      tarmac_base_sha: "abc123",
+      tarmac_branch: "cursor/TARM-1",
+      tarmac_pr_url: "https://github.com/fiberplane/tarmac/pull/1",
+      tarmac_last_error:
+        "Cursor launched but FP metadata persistence failed: fp metadata write failed with [REDACTED_SECRET]=[REDACTED_VALUE]",
+    });
+    expect(updated.comments[0]?.body).toContain("Run metadata was recorded for reconciliation");
+    expect(updated.comments[0]?.body).not.toContain("FP_TOKEN");
+    expect(updated.comments[0]?.body).not.toContain("secret");
   });
 
   test("reconciles an existing Cursor run into FP state", async () => {

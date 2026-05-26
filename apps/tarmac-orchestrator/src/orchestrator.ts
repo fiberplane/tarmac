@@ -138,21 +138,23 @@ export class TarmacOrchestrator {
     try {
       const claimId = await this.#claimIssue(issue);
       const claimedIssue = await this.#fpClient.getIssue(issue.id);
+      const prompt = renderWorkerPrompt({
+        issue: {
+          id: claimedIssue.id,
+          ...(claimedIssue.displayId === undefined ? {} : { displayId: claimedIssue.displayId }),
+          title: claimedIssue.title,
+          ...(claimedIssue.description === undefined
+            ? {}
+            : { description: claimedIssue.description }),
+          comments: claimedIssue.comments,
+        },
+        repository: this.#repository,
+        ...(this.#redaction === undefined ? {} : { redaction: this.#redaction }),
+      });
+
+      let cursorRun: CursorRunSnapshot;
       try {
-        const prompt = renderWorkerPrompt({
-          issue: {
-            id: claimedIssue.id,
-            ...(claimedIssue.displayId === undefined ? {} : { displayId: claimedIssue.displayId }),
-            title: claimedIssue.title,
-            ...(claimedIssue.description === undefined
-              ? {}
-              : { description: claimedIssue.description }),
-            comments: claimedIssue.comments,
-          },
-          repository: this.#repository,
-          ...(this.#redaction === undefined ? {} : { redaction: this.#redaction }),
-        });
-        const cursorRun = await this.#cursorClient.dispatch({
+        cursorRun = await this.#cursorClient.dispatch({
           name: `${claimedIssue.displayId ?? claimedIssue.id}: ${claimedIssue.title}`,
           prompt,
           repository: {
@@ -163,12 +165,16 @@ export class TarmacOrchestrator {
           idempotencyKey: claimId,
           ...(this.#cursorEnvVars === undefined ? {} : { envVars: this.#cursorEnvVars }),
         });
+      } catch (cause) {
+        await this.#recordDispatchFailure(claimedIssue.id, cause);
+        throw cause;
+      }
 
+      try {
         await this.#fpClient.updateIssue(
           claimedIssue.id,
           updateFromCursorRun(claimedIssue, cursorRun, this.#repository.baseSha),
         );
-
         return {
           issue: claimedIssue,
           claimId,
@@ -176,7 +182,7 @@ export class TarmacOrchestrator {
           cursorRun,
         };
       } catch (cause) {
-        await this.#recordDispatchFailure(claimedIssue.id, cause);
+        await this.#recordPostLaunchPersistenceFailure(claimedIssue.id, cursorRun, cause);
         throw cause;
       }
     } finally {
@@ -287,6 +293,25 @@ export class TarmacOrchestrator {
       `Tarmac dispatch failed before Cursor handoff: ${lastError}`,
     );
   }
+
+  async #recordPostLaunchPersistenceFailure(
+    issueId: string,
+    run: CursorRunSnapshot,
+    cause: unknown,
+  ): Promise<void> {
+    const lastError = `Cursor launched but FP metadata persistence failed: ${redactFailure(
+      cause,
+      this.#redaction,
+    )}`;
+    await this.#fpClient.updateIssue(issueId, {
+      status: "in-progress",
+      properties: postLaunchFailureProperties(run, this.#repository.baseSha, lastError),
+    });
+    await this.#fpClient.commentIssue(
+      issueId,
+      `Cursor launched, but Tarmac failed to persist terminal metadata. Run metadata was recorded for reconciliation: ${lastError}`,
+    );
+  }
 }
 
 const findIssue = (
@@ -338,6 +363,29 @@ export const updateFromCursorRun = (
     status: finishedWithPr ? "done" : "in-progress",
     properties,
   };
+};
+
+const postLaunchFailureProperties = (
+  run: CursorRunSnapshot,
+  baseSha: string,
+  lastError: string,
+): Partial<Record<TarmacPropertyKey, string>> => {
+  const properties: Partial<Record<TarmacPropertyKey, string>> = {
+    tarmac_agent_id: run.agentId,
+    tarmac_run_id: run.runId,
+    tarmac_base_sha: baseSha,
+    tarmac_state: "needs-attention",
+    tarmac_last_error: lastError,
+  };
+
+  if (run.branch !== undefined) {
+    properties.tarmac_branch = run.branch;
+  }
+  if (run.prUrl !== undefined) {
+    properties.tarmac_pr_url = run.prUrl;
+  }
+
+  return properties;
 };
 
 const redactFailure = (cause: unknown, redaction: PromptRedactionConfig | undefined): string => {
