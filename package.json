@@ -15,6 +15,9 @@
     "typecheck": "tsgo --noEmit",
     "check": "bun run lint && bun run lint:ast && bun run lint:drift && bun run typecheck"
   },
+  "dependencies": {
+    "effect": "3.21.2"
+  },
   "devDependencies": {
     "@ast-grep/cli": "^0.42.0",
     "@types/bun": "^1.2.14",
