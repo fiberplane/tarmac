@@ -13,5 +13,3 @@ project-specific notes into `docs/reference/`.
 Git remotes used by live Cursor checks:
 
 - `origin`: `https://github.com/fiberplane/tarmac.git`, canonical private repo.
-- `cursor`: `https://github.com/brettimus/tarmac.git`, private fallback visible
-  to the current Cursor account while org repo access is pending.

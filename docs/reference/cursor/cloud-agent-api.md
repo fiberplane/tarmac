@@ -54,13 +54,11 @@ user, but `cursor-agent models` fails because the macOS login keychain is
 locked. This proof requires an exported `CURSOR_API_KEY`; the CLI keychain path
 is only useful as separate operational context.
 
-Cursor repository access is currently the gating external integration. The
-`fiberplane/tarmac` private repo exists, but the Cursor account did not list it
-on 2026-05-26. A private fallback repo at `brettimus/tarmac` is pushed as the
-local `cursor` remote and is visible to Cursor; run live proofs with
-`CURSOR_REMOTE_NAME=cursor` until the canonical org repo is connected.
+Cursor repository access was the gating external integration during the first
+live proof. Current real launches should use the canonical repo with
+`CURSOR_REMOTE_NAME=origin`.
 
-Live proof status on 2026-05-26: passed against the `cursor` remote. Run
+Live proof status on 2026-05-26: passed against a temporary fallback remote. Run
 `bc-c8c2a71a-c559-49e5-80ef-8652317e160d/run-48d5f049-95a5-480a-b07f-d8710fcb68e3`
 finished and returned the expected `BOOTSTRAP_SMOKE_OK` JSON marker after
 verifying repo-local Cursor files, `bun`, `fp`, and FP REST/no-clone issue read
@@ -68,13 +66,11 @@ from `/tmp`.
 
 ## Tarmac Live Dispatch Proof
 
-Full property-triggered dispatch status on 2026-05-26: passed against the
-`cursor` remote. The FP issue `TARM-weeqzaxz` was made eligible by setting
-`tarmac_ready=true`; `tarmac run-one --cursor real` claimed it, launched Cursor
-run `bc-3d23cee8-0cbb-4987-b15b-ef74338806b1/run-668ab4dc-c708-4f90-82d3-a45bec90b107`,
+Full property-triggered dispatch status on 2026-05-26: first passed against a
+temporary fallback remote. The FP issue `TARM-weeqzaxz` was made eligible by
+setting `tarmac_ready=true`; `tarmac run-one --cursor real` claimed it, launched
+Cursor run `bc-3d23cee8-0cbb-4987-b15b-ef74338806b1/run-668ab4dc-c708-4f90-82d3-a45bec90b107`,
 and `tarmac reconcile --cursor real` recorded terminal PR metadata.
 
-Resulting PR: https://github.com/brettimus/tarmac/pull/1. The PR added only
-`docs/demo/cursor-live-handoff-proof.md`, and the target FP issue ended with
-`tarmac_state=end`, branch `cursor/cursor-live-handoff-proof-06b1`, PR number
-`1`, and head SHA `17e51f3563f34c81f2364b6700b3ffc6d90fc551`.
+The follow-up getting-started dispatch also used the temporary fallback and was
+merged back into canonical `origin/main` before retiring that fallback.
