@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
+BASE_PATH="$PATH"
+
 log() {
   printf '%s\n' "$1"
 }
@@ -14,6 +16,57 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 is required for Cursor bootstrap"
 }
 
+run_as_root() {
+  if [ "$(id -u)" = "0" ]; then
+    "$@"
+    return
+  fi
+
+  require_command sudo
+  sudo "$@"
+}
+
+base_path_has_command() {
+  PATH="$BASE_PATH" command -v "$1" >/dev/null 2>&1
+}
+
+expose_on_base_path() {
+  name="$1"
+  source_path="$2"
+
+  if base_path_has_command "$name"; then
+    log "$name already available on base PATH"
+    return
+  fi
+
+  old_ifs="$IFS"
+  IFS=:
+  for dir in $BASE_PATH; do
+    IFS="$old_ifs"
+    if [ ! -d "$dir" ]; then
+      IFS=:
+      continue
+    fi
+
+    target="$dir/$name"
+    log "Exposing $name at $target"
+    if [ -w "$dir" ]; then
+      ln -sf "$source_path" "$target"
+    else
+      run_as_root ln -sf "$source_path" "$target"
+    fi
+
+    if PATH="$BASE_PATH" command -v "$name" >/dev/null 2>&1; then
+      IFS="$old_ifs"
+      return
+    fi
+    IFS=:
+  done
+  IFS="$old_ifs"
+
+  fail "$name could not be exposed on the base PATH for later worker shells"
+}
+
 install_linux_unzip_if_needed() {
   if [ "$(uname -s)" != "Linux" ] || command -v unzip >/dev/null 2>&1; then
     return
@@ -21,14 +74,8 @@ install_linux_unzip_if_needed() {
 
   if command -v apt-get >/dev/null 2>&1; then
     log "Installing unzip for Bun installer"
-    if [ "$(id -u)" = "0" ]; then
-      apt-get update
-      apt-get install -y unzip
-    else
-      require_command sudo
-      sudo apt-get update
-      sudo apt-get install -y unzip
-    fi
+    run_as_root apt-get update
+    run_as_root apt-get install -y unzip
     return
   fi
 
@@ -41,6 +88,7 @@ install_bun_if_needed() {
 
   if command -v bun >/dev/null 2>&1; then
     log "Bun already available"
+    expose_on_base_path bun "$(command -v bun)"
     return
   fi
 
@@ -51,6 +99,7 @@ install_bun_if_needed() {
   log "Installing Bun"
   curl -fsSL https://bun.com/install | bash
   export PATH="$BUN_INSTALL/bin:$PATH"
+  expose_on_base_path bun "$BUN_INSTALL/bin/bun"
 }
 
 install_fp() {
@@ -63,6 +112,7 @@ install_fp() {
   log "Installing fp CLI"
   curl -fsSL https://setup.fp.dev/install.sh | sh -s -- --install-dir "$FP_INSTALL_DIR"
   export PATH="$FP_INSTALL_DIR:$PATH"
+  expose_on_base_path fp "$FP_INSTALL_DIR/fp"
 }
 
 verify_command() {

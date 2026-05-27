@@ -181,10 +181,13 @@ Real dispatch additionally requires:
 The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. It
 does not rely on a user shell profile or local `~/.bun`; it installs or exposes
 Bun in the current shell, runs `bun install --frozen-lockfile`, installs `fp`,
-and verifies both CLIs. To diagnose a base image without Bun, run:
+exposes both CLIs through the base worker `PATH`, and verifies both CLIs. To
+diagnose a base image without Bun, run:
 
 ```bash
-env -i HOME=/tmp/tarmac-cursor-home PATH=/usr/bin:/bin sh ops/cursor/bootstrap-env.sh
+rm -rf /tmp/tarmac-cursor-home
+mkdir -p /tmp/tarmac-cursor-home/bin
+env -i HOME=/tmp/tarmac-cursor-home PATH=/tmp/tarmac-cursor-home/bin:/usr/bin:/bin sh ops/cursor/bootstrap-env.sh
 ```
 
 Gated live bootstrap (proves SDK + FP REST from a cloud worker; env gate in `ops/cursor/bootstrap-smoke-e2e.ts`):

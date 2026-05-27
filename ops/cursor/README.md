@@ -28,7 +28,8 @@ sh ops/cursor/bootstrap-env.sh
 
 The script is intentionally checked in instead of inlined in JSON. It installs
 or exposes Bun first, runs `bun install --frozen-lockfile`, installs `fp` into
-`$HOME/.fiberplane/bin`, updates `PATH` in the current install shell, and checks
+`$HOME/.fiberplane/bin`, updates `PATH` in the current install shell, exposes
+both CLIs through the base `PATH` for later worker shells, and checks
 `bun --version` plus `fp --version`. It must stay idempotent because Cursor may
 reuse or refresh cached environments.
 
@@ -36,7 +37,9 @@ To reproduce a missing-Bun base image locally without using local shell
 profiles:
 
 ```bash
-env -i HOME=/tmp/tarmac-cursor-home PATH=/usr/bin:/bin sh ops/cursor/bootstrap-env.sh
+rm -rf /tmp/tarmac-cursor-home
+mkdir -p /tmp/tarmac-cursor-home/bin
+env -i HOME=/tmp/tarmac-cursor-home PATH=/tmp/tarmac-cursor-home/bin:/usr/bin:/bin sh ops/cursor/bootstrap-env.sh
 ```
 
 The script may print tool versions and installer diagnostics. Do not add token
