@@ -47,6 +47,8 @@ bun run tarmac scan --cursor fake
 bun run tarmac run-one <issue-id> --cursor fake
 bun run tarmac watch --cursor fake --poll-interval 5
 bun run tarmac watch --cursor fake --once
+bun run tarmac daemon --cursor fake --poll-interval 5
+bun run tarmac status
 bun run tarmac reconcile <issue-id> --cursor fake
 ```
 
@@ -56,12 +58,16 @@ Equivalent direct invocation:
 bun apps/tarmac-orchestrator/src/cli.ts scan --cursor fake
 ```
 
-| Command                | Purpose                                                   |
-| ---------------------- | --------------------------------------------------------- |
-| `scan`                 | List eligible vs ineligible issues (JSON on stdout)       |
-| `run-one <issue-id>`   | Claim and dispatch one issue                              |
-| `watch`                | Poll scan/dispatch loop; `--once` runs a single iteration |
-| `reconcile <issue-id>` | Sync terminal Cursor state to FP without relaunching      |
+| Command                | Purpose                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------ |
+| `scan`                 | List eligible vs ineligible issues (JSON on stdout)                                              |
+| `run-one <issue-id>`   | Claim and dispatch one issue                                                                     |
+| `watch`                | Poll scan/dispatch loop; `--once` runs a single iteration; persists local run history by default |
+| `daemon`               | Same loop as `watch`, intended for long-running processes with durable ledger/events             |
+| `status`               | Read recent local run history from `.tarmac/` (`--limit`, `--events`)                            |
+| `reconcile <issue-id>` | Sync terminal Cursor state to FP without relaunching                                             |
+
+Local ledger and structured event paths: [docs/reference/local-observability.md](docs/reference/local-observability.md).
 
 ### Fake vs real Cursor mode
 
