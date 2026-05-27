@@ -71,7 +71,7 @@ const setIfPresent = (
   failures: DecodeFailure[],
 ) => {
   const value = source[sourceKey];
-  if (value === undefined) {
+  if (value === undefined || value === "") {
     return;
   }
 

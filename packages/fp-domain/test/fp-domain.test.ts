@@ -87,6 +87,23 @@ describe("decodeTarmacProperties", () => {
     });
   });
 
+  test("treats blank optional text metadata as absent", () => {
+    const decoded = decodeTarmacProperties({
+      tarmac_ready: "true",
+      tarmac_agent_id: "",
+      tarmac_run_id: "",
+      tarmac_cursor_url: "",
+    });
+
+    expect(decoded).toEqual({
+      kind: "valid",
+      properties: {
+        ready: "true",
+        state: "idle",
+      },
+    });
+  });
+
   test("encodes cursor run url metadata", () => {
     expect(
       encodeTarmacProperties({
@@ -226,6 +243,27 @@ describe("isEligible", () => {
       kind: "ineligible",
       reason: {
         kind: "already-dispatched",
+      },
+    });
+  });
+
+  test("allows cleared blank cursor run metadata", () => {
+    const candidate = issue({
+      properties: {
+        tarmac_ready: "true",
+        tarmac_agent_id: "",
+        tarmac_run_id: "",
+      },
+    });
+
+    expect(isEligible(candidate, buildOpenIssueIndex([candidate]))).toEqual({
+      kind: "eligible",
+      value: {
+        issue: candidate,
+        claimBasis: {
+          issueId: "issue-1",
+          displayId: "TARM-1",
+        },
       },
     });
   });
