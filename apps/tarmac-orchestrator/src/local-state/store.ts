@@ -262,7 +262,6 @@ export class RunSession {
       return;
     }
 
-    this.#finished = true;
     const finishedAt = new Date().toISOString();
     const summary =
       options.summary === undefined
@@ -278,6 +277,8 @@ export class RunSession {
       status: options.status,
       ...(summary === undefined ? {} : { summary }),
     });
+
+    this.#finished = true;
 
     const finishedRecord: RunLedgerRecord = {
       ...this.#startedRecord,

@@ -141,6 +141,7 @@ describe("LocalRunStore", () => {
       const events = await readFile(resolveRunEventsPath(stateRoot, session.runId), "utf8");
       expect(findSensitiveLeaks(events, redaction)).toEqual([]);
       expect(events).toContain("dispatch.failed");
+      expect(events).toContain("run.finished");
       expect(events).toContain("[REDACTED_VALUE]");
       expect(events).not.toContain("fp_secret_456");
 
@@ -233,6 +234,7 @@ describe("LocalRunStore", () => {
       expect(types).toContain("cursor.launch");
       expect(types).toContain("metadata.persisted");
       expect(types).toContain("watch.iteration");
+      expect(types).toContain("run.finished");
 
       const serialized = JSON.stringify(events.events);
       expect(findSensitiveLeaks(serialized, redaction)).toEqual([]);
