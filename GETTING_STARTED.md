@@ -58,14 +58,18 @@ Equivalent direct invocation:
 bun apps/tarmac-orchestrator/src/cli.ts scan --cursor fake
 ```
 
-| Command                | Purpose                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------ |
-| `scan`                 | List eligible vs ineligible issues (JSON on stdout)                                              |
-| `run-one <issue-id>`   | Claim and dispatch one issue                                                                     |
-| `watch`                | Poll scan/dispatch loop; `--once` runs a single iteration; persists local run history by default |
-| `daemon`               | Same loop as `watch`, intended for long-running processes with durable ledger/events             |
-| `status`               | Read recent local run history from `.tarmac/` (`--limit`, `--events`)                            |
-| `reconcile <issue-id>` | Sync terminal Cursor state to FP without relaunching                                             |
+| Command              | Purpose                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------ |
+| `scan`               | List eligible vs ineligible issues (JSON on stdout)                                              |
+| `run-one <issue-id>` | Claim and dispatch one issue                                                                     |
+| `watch`              | Poll scan/dispatch loop; `--once` runs a single iteration; persists local run history by default |
+| `daemon`             | Same loop as `watch`, intended for long-running processes with durable ledger/events             |
+
+Set `TARMAC_MAX_CONCURRENT_RUNS` (default `1`) or `--max-concurrent-runs` to cap
+simultaneous Cursor runs. Parent/child FP bouts and rollup behavior:
+[docs/reference/dispatch-capacity-and-bouts.md](docs/reference/dispatch-capacity-and-bouts.md).
+| `status` | Read recent local run history from `.tarmac/` (`--limit`, `--events`) |
+| `reconcile <issue-id>` | Sync terminal Cursor state to FP without relaunching |
 
 Local ledger and structured event paths: [docs/reference/local-observability.md](docs/reference/local-observability.md).
 

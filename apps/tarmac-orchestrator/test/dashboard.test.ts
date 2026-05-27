@@ -235,6 +235,12 @@ describe("dashboard HTTP handlers", () => {
       const htmlResponse = await handlers.handleRequest(new Request("http://127.0.0.1/"));
       expect(htmlResponse.status).toBe(200);
       expect(await htmlResponse.text()).toContain("Tarmac orchestration dashboard");
+
+      const jsResponse = await handlers.handleRequest(new Request("http://127.0.0.1/dashboard.js"));
+      expect(jsResponse.status).toBe(200);
+      const js = await jsResponse.text();
+      expect(js).toContain("dependency");
+      expect(js).toContain("not todo");
     } finally {
       await rm(stateRoot, { recursive: true, force: true });
     }

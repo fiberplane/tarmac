@@ -164,7 +164,8 @@ header {
 }
 h1 { font-size: 1rem; margin: 0; }
 h2 { font-size: 0.85rem; margin: 0 0 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
-.meta { color: var(--muted); font-size: 0.75rem; }
+.meta { color: var(--muted); font-size: 0.75rem; overflow-wrap: anywhere; }
+header > div { min-width: 0; }
 button {
   font: inherit;
   padding: 0.2rem 0.5rem;
@@ -235,6 +236,12 @@ a { color: inherit; }
 @media (max-width: 40rem) {
   body { padding: 0.5rem; }
   .grid { grid-template-columns: 1fr; }
+  table { table-layout: fixed; }
+  th, td { padding: 0.15rem; overflow-wrap: anywhere; }
+  th:nth-child(1), td:nth-child(1) { width: 36%; }
+  th:nth-child(2), td:nth-child(2) { width: 25%; }
+  th:nth-child(3), td:nth-child(3) { width: 39%; }
+  th:nth-child(4), td:nth-child(4) { display: none; }
 }
 `;
 
@@ -259,9 +266,13 @@ const link = (href, label) => {
 
 const reasonText = (reason) => {
   if (!reason) return "";
-  if (reason.kind === "blocked-by-dependency") return "blocked by " + esc(reason.dependencyId);
-  if (reason.kind === "blocked-by-open-child") return "blocked by child " + esc(reason.childId);
-  if (reason.kind === "not-todo") return "status " + esc(reason.status);
+  if (reason.kind === "blocked-by-dependency") {
+    return reason.dependencyId ? "blocked by " + esc(reason.dependencyId) : "dependency";
+  }
+  if (reason.kind === "blocked-by-open-child") {
+    return reason.childId ? "blocked by child " + esc(reason.childId) : "open child";
+  }
+  if (reason.kind === "not-todo") return reason.status ? "status " + esc(reason.status) : "not todo";
   return esc(reason.kind);
 };
 

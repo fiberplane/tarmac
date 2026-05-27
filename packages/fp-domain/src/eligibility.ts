@@ -24,6 +24,11 @@ export type IneligibilityReason =
       readonly childId: string;
     }
   | {
+      readonly kind: "blocked-by-capacity";
+      readonly activeRunCount: number;
+      readonly maxConcurrentRuns: number;
+    }
+  | {
       readonly kind: "malformed-tarmac-properties";
       readonly failures: readonly DecodeFailure[];
     };

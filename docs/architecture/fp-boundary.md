@@ -35,7 +35,13 @@ A candidate is eligible only when all conditions hold:
 - issue ID is not already in the orchestrator's active run index;
 - issue has no active `tarmac_agent_id` / `tarmac_run_id` unless reconcile proves
   it is terminal and re-armable;
+- global active Cursor runs are below `TARMAC_MAX_CONCURRENT_RUNS` (default `1`;
+  CLI `--max-concurrent-runs` overrides env);
 - known `tarmac_*` properties decode successfully.
+
+Active runs combine FP metadata (`tarmac_agent_id` / `tarmac_run_id` on
+non-terminal issues) with the same-process claim set. See
+[dispatch-capacity-and-bouts.md](../reference/dispatch-capacity-and-bouts.md).
 
 The canonical wire values for `tarmac_ready` are `"true"` and `"false"`.
 Desktop labels such as `Ready` and `Not Ready` are display text only.

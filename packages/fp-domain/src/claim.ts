@@ -31,6 +31,10 @@ export class SameProcessClaimSet {
   release(issueId: string): void {
     this.#issueIds.delete(issueId);
   }
+
+  activeIssueIds(): ReadonlySet<string> {
+    return this.#issueIds;
+  }
 }
 
 export const createClaimId = (draft: ClaimDraft): string =>
