@@ -103,14 +103,15 @@ install_bun_if_needed() {
 }
 
 install_fp() {
+  fp_version="${FP_VERSION:-0.24.0-next.85d878d}"
   export FP_INSTALL_DIR="${FP_INSTALL_DIR:-$HOME/.fiberplane/bin}"
   export PATH="$FP_INSTALL_DIR:$PATH"
 
   require_command curl
   require_command tar
 
-  log "Installing fp CLI"
-  curl -fsSL https://setup.fp.dev/install.sh | sh -s -- --install-dir "$FP_INSTALL_DIR"
+  log "Installing fp CLI $fp_version"
+  curl -fsSL https://setup.fp.dev/install.sh | sh -s -- --version "$fp_version" --install-dir "$FP_INSTALL_DIR"
   export PATH="$FP_INSTALL_DIR:$PATH"
   expose_on_base_path fp "$FP_INSTALL_DIR/fp"
 }

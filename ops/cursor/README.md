@@ -27,11 +27,13 @@ sh ops/cursor/bootstrap-env.sh
 ```
 
 The script is intentionally checked in instead of inlined in JSON. It installs
-or exposes Bun first, runs `bun install --frozen-lockfile`, installs `fp` into
-`$HOME/.fiberplane/bin`, updates `PATH` in the current install shell, exposes
-both CLIs through the base `PATH` for later worker shells, and checks
-`bun --version` plus `fp --version`. It must stay idempotent because Cursor may
-reuse or refresh cached environments.
+or exposes Bun first, runs `bun install --frozen-lockfile`, installs
+REST-capable `fp` `0.24.0-next.85d878d` into `$HOME/.fiberplane/bin`, updates
+`PATH` in the current install shell, exposes both CLIs through the base `PATH`
+for later worker shells, and checks `bun --version` plus `fp --version`. It must
+stay idempotent because Cursor may reuse or refresh cached environments. Set
+`FP_VERSION` before bootstrap only when the pinned REST-capable version needs to
+change.
 
 To reproduce a missing-Bun base image locally without using local shell
 profiles:

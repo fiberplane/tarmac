@@ -54,10 +54,12 @@ verify `.cursor` files, `ops/cursor/bootstrap-env.sh`, `bun --version`,
 
 The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. The
 script installs or exposes Bun before running `bun install --frozen-lockfile`,
-installs `fp` into `$HOME/.fiberplane/bin`, updates `PATH` for the current
-install shell, exposes `bun` and `fp` through the base `PATH` for later worker
-shells, and verifies `bun --version` plus `fp --version`. It does not read local
-shell profiles or print credential values.
+installs REST-capable `fp` `0.24.0-next.85d878d` into
+`$HOME/.fiberplane/bin`, updates `PATH` for the current install shell, exposes
+`bun` and `fp` through the base `PATH` for later worker shells, and verifies
+`bun --version` plus `fp --version`. It does not read local shell profiles or
+print credential values. Set `FP_VERSION` before bootstrap only when the pinned
+REST-capable version needs to change.
 
 The proof defaults to a 30-minute timeout because a fresh Cursor environment may
 need to provision the base image, install Bun, install workspace dependencies,

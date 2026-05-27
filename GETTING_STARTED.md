@@ -181,8 +181,10 @@ Real dispatch additionally requires:
 The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. It
 does not rely on a user shell profile or local `~/.bun`; it installs or exposes
 Bun in the current shell, runs `bun install --frozen-lockfile`, installs `fp`,
-exposes both CLIs through the base worker `PATH`, and verifies both CLIs. To
-diagnose a base image without Bun, run:
+exposes both CLIs through the base worker `PATH`, and verifies both CLIs. Cursor
+bootstrap pins `fp` to REST-capable `0.24.0-next.85d878d`; set `FP_VERSION` only
+when changing that pinned worker CLI version. To diagnose a base image without
+Bun, run:
 
 ```bash
 rm -rf /tmp/tarmac-cursor-home
