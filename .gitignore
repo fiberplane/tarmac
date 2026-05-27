@@ -19,7 +19,7 @@
 !.env.example
 
 # Cloned upstream repos and local doc snapshots for agent reference
-references/
+/references/
 
 # Dependencies/build output
 node_modules/
