@@ -104,9 +104,10 @@ Docs rot when they describe code that changed. To mitigate:
 
 ### Root entry points
 
-| Doc                                            | Topic                                                                          |
-| ---------------------------------------------- | ------------------------------------------------------------------------------ |
-| [../GETTING_STARTED.md](../GETTING_STARTED.md) | Operator and agent first-run: install, FP link, orchestrator CLI, Cursor setup |
+| Doc                                                                                      | Topic                                                                          |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [../GETTING_STARTED.md](../GETTING_STARTED.md)                                           | Operator and agent first-run: install, FP link, orchestrator CLI, Cursor setup |
+| [reference/daemon-dashboard-demo-runbook.md](reference/daemon-dashboard-demo-runbook.md) | Daemon + dashboard meetup demo, real/fake paths, PR/reconcile loop             |
 
 ### patterns/
 
@@ -147,9 +148,10 @@ Feasibility notes and demo evidence live here until they graduate into proposals
 
 Validation patterns, test infrastructure notes, and QA scenario indexes live here.
 
-| Doc                    | Topic                                                     |
-| ---------------------- | --------------------------------------------------------- |
-| [qa.md](testing/qa.md) | When to write prose-first QA scenarios with `packages/qa` |
+| Doc                                                                                              | Topic                                                      |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| [qa.md](testing/qa.md)                                                                           | When to write prose-first QA scenarios with `packages/qa`  |
+| [daemon-dashboard-verification-checklist.md](testing/daemon-dashboard-verification-checklist.md) | Pre-demo and post-change verification for daemon/dashboard |
 
 ### graveyard/
 
