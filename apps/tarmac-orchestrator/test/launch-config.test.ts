@@ -37,7 +37,7 @@ describe("launch config", () => {
   });
 
   test("parses Cursor mode strictly", () => {
-    expect(parseCursorMode(undefined)).toBe("fake");
+    expect(parseCursorMode(undefined)).toBe("real");
     expect(parseCursorMode("fake")).toBe("fake");
     expect(parseCursorMode("real")).toBe("real");
     expect(parseCursorMode("other")).toBeUndefined();

@@ -21,11 +21,11 @@ const HOST_SECRET_NAMES: readonly string[] = [
 export type CursorWorkerEnv = Readonly<Record<string, string>>;
 
 export const parseCursorMode = (mode: string | undefined): CursorMode | undefined => {
-  if (mode === undefined || mode === "fake") {
-    return "fake";
-  }
-  if (mode === "real") {
+  if (mode === undefined || mode === "real") {
     return "real";
+  }
+  if (mode === "fake") {
+    return "fake";
   }
 
   return undefined;
