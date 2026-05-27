@@ -6,7 +6,6 @@ import {
   type IneligibilityReason,
 } from "@tarmac/fp-domain";
 import type { PromptRedactionConfig } from "@tarmac/worker-prompt";
-
 import { Schema } from "effect";
 
 import type { FpClient, OrchestratorIssue } from "../fp-client";
@@ -33,8 +32,9 @@ export type BuildDashboardStatusOptions = {
 
 type DecodedPersistedEvent = Schema.Schema.Type<typeof PersistedOrchestratorEventSchema>;
 
-const asPersistedEvents = (events: readonly DecodedPersistedEvent[]): PersistedOrchestratorEvent[] =>
-  events as PersistedOrchestratorEvent[];
+const asPersistedEvents = (
+  events: readonly DecodedPersistedEvent[],
+): PersistedOrchestratorEvent[] => events as PersistedOrchestratorEvent[];
 
 const issueRefKey = (issue: IssueRef): string => issue.displayId ?? issue.issueId;
 
@@ -253,7 +253,7 @@ const buildDispatches = (events: readonly PersistedOrchestratorEvent[]): RunDisp
       next = {
         ...next,
         cursorUrl: inferCursorRunUrl(event.cursorRun.agentId),
-        ...(event.prUrl ?? event.cursorRun.prUrl
+        ...((event.prUrl ?? event.cursorRun.prUrl)
           ? { prUrl: event.prUrl ?? event.cursorRun.prUrl }
           : next.prUrl === undefined
             ? {}
