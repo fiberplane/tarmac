@@ -83,3 +83,7 @@ bun run tarmac status --events 30 | jq .
 ```
 
 Corrupt JSONL lines are skipped when reading; `status` may report `corruptEventLineCount` when `--events` is used.
+
+## Demo runbook
+
+For a full operator walkthrough (fake vs real Cursor, meetup script, degraded modes, PR/reconcile loop), see [daemon-dashboard-demo-runbook.md](./daemon-dashboard-demo-runbook.md) and the [verification checklist](../testing/daemon-dashboard-verification-checklist.md).

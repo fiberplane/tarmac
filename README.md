@@ -25,7 +25,7 @@ fp tree             # inspect work
 bun run tarmac scan --cursor fake
 ```
 
-Spec: [docs/architecture/SPEC.md](docs/architecture/SPEC.md) · Architecture: [docs/architecture/0001-cursor-backed-symphony-loop.md](docs/architecture/0001-cursor-backed-symphony-loop.md) · FP boundaries: [docs/architecture/fp-boundary.md](docs/architecture/fp-boundary.md)
+Spec: [docs/architecture/SPEC.md](docs/architecture/SPEC.md) · Architecture: [docs/architecture/0001-cursor-backed-symphony-loop.md](docs/architecture/0001-cursor-backed-symphony-loop.md) · FP boundaries: [docs/architecture/fp-boundary.md](docs/architecture/fp-boundary.md) · Demo runbook: [docs/reference/daemon-dashboard-demo-runbook.md](docs/reference/daemon-dashboard-demo-runbook.md)
 
 ## Setup
 

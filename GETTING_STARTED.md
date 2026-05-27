@@ -73,6 +73,8 @@ simultaneous Cursor runs. Parent/child FP bouts and rollup behavior:
 
 Local ledger and structured event paths: [docs/reference/local-observability.md](docs/reference/local-observability.md).
 
+Daemon + dashboard meetup demo (fake path, real path, verification): [docs/reference/daemon-dashboard-demo-runbook.md](docs/reference/daemon-dashboard-demo-runbook.md).
+
 ### Fake vs real Cursor mode
 
 | Mode     | `--cursor` | Credentials                                              | Git / remote                                                                                                                   |
