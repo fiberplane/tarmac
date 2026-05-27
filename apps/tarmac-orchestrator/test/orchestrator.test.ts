@@ -165,6 +165,7 @@ describe("TarmacOrchestrator", () => {
       fpClient,
       cursorClient: new CapturingCursorClient(),
       repository,
+      maxConcurrentRuns: 5,
     });
 
     const scan = await orchestrator.scan();
@@ -417,6 +418,119 @@ describe("TarmacOrchestrator", () => {
     expect(comments[1]?.body).toBe(
       `Cursor run finished. Run: ${testCursorUrl}. PR: https://github.com/example-org/tarmac/pull/1`,
     );
+  });
+
+  test("blocks parent issues while children are open", async () => {
+    const fpClient = new MemoryFpClient([
+      issue({
+        id: "parent",
+        displayId: "TARM-10",
+      }),
+      issue({
+        id: "child",
+        displayId: "TARM-11",
+        parent: "parent",
+      }),
+    ]);
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient: new CapturingCursorClient({
+        prUrl: "https://github.com/example-org/tarmac/pull/1",
+      }),
+      repository,
+      maxConcurrentRuns: 2,
+    });
+
+    const scan = await orchestrator.scan();
+
+    expect(scan.eligible.map((entry) => entry.id)).toEqual(["child"]);
+    expect(scan.ineligible).toContainEqual({
+      issue: await fpClient.getIssue("parent"),
+      reason: {
+        kind: "blocked-by-open-child",
+        childId: "child",
+      },
+    });
+    expect(scan.parentRollups).toEqual([
+      {
+        parentId: "parent",
+        parentDisplayId: "TARM-10",
+        openChildCount: 1,
+        doneChildCount: 0,
+        activeChildRunCount: 0,
+        dispatchBlockedByOpenChildren: true,
+      },
+    ]);
+  });
+
+  test("watch respects global max concurrent runs across fp active metadata", async () => {
+    const fpClient = new MemoryFpClient([
+      issue({
+        id: "running",
+        displayId: "TARM-1",
+        status: "in-progress",
+        properties: {
+          tarmac_ready: "true",
+          tarmac_state: "active",
+          tarmac_agent_id: "bc-00000000-0000-4000-8000-000000000001",
+          tarmac_run_id: "run-00000000-0000-4000-8000-000000000001",
+        },
+      }),
+      issue({ id: "ready-a", displayId: "TARM-2" }),
+      issue({ id: "ready-b", displayId: "TARM-3" }),
+    ]);
+    const cursorClient = new CapturingCursorClient({
+      prUrl: "https://github.com/example-org/tarmac/pull/1",
+    });
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient,
+      repository,
+      maxConcurrentRuns: 1,
+    });
+
+    const result = await orchestrator.watch({
+      maxIterations: 1,
+    });
+
+    expect(result.dispatched).toHaveLength(0);
+    expect(cursorClient.requests).toHaveLength(0);
+
+    const scan = await orchestrator.scan();
+    expect(scan.activeRunCount).toBe(1);
+    expect(scan.eligible).toHaveLength(0);
+    expect(scan.ineligible).toContainEqual({
+      issue: await fpClient.getIssue("ready-a"),
+      reason: {
+        kind: "blocked-by-capacity",
+        activeRunCount: 1,
+        maxConcurrentRuns: 1,
+      },
+    });
+  });
+
+  test("watch dispatches eligible issues in deterministic order up to capacity", async () => {
+    const fpClient = new MemoryFpClient([
+      issue({ id: "ready-c", displayId: "TARM-30" }),
+      issue({ id: "ready-a", displayId: "TARM-10" }),
+      issue({ id: "ready-b", displayId: "TARM-20" }),
+    ]);
+    const cursorClient = new CapturingCursorClient({
+      prUrl: "https://github.com/example-org/tarmac/pull/1",
+    });
+    const orchestrator = new TarmacOrchestrator({
+      fpClient,
+      cursorClient,
+      repository,
+      maxConcurrentRuns: 2,
+    });
+
+    const result = await orchestrator.watch({
+      maxIterations: 1,
+    });
+
+    expect(result.dispatched.map((entry) => entry.issue.id)).toEqual(["ready-a", "ready-b"]);
+    expect(cursorClient.requests).toHaveLength(2);
   });
 
   test("watch dispatches eligible issues in a bounded polling loop", async () => {

@@ -2,6 +2,7 @@
 import { createCursorSdkClient, createFakeCursorClient } from "@tarmac/cursor-client";
 
 import { runWithPersistedSession, summarizeWatchResult } from "./cli-persistence";
+import { readDispatchCapacityConfig } from "./dispatch-config";
 import { CliUsageError } from "./errors";
 import { FpCliClient } from "./fp-client";
 import { buildCursorWorkerEnv, buildHostSecretRedaction, parseCursorMode } from "./launch-config";
@@ -97,6 +98,10 @@ const createOrchestrator = async (options: OrchestratorBuildOptions) => {
     requireLocalHeadAtRemote: cursorMode === "real",
   });
   const redaction = buildHostSecretRedaction();
+  const capacity = readDispatchCapacityConfig(
+    process.env,
+    flagString(options.flags, "max-concurrent-runs"),
+  );
 
   return {
     orchestrator: new TarmacOrchestrator({
@@ -104,6 +109,7 @@ const createOrchestrator = async (options: OrchestratorBuildOptions) => {
       cursorClient: cursorMode === "real" ? createCursorSdkClient() : createFakeCursorClient(),
       repository,
       redaction,
+      maxConcurrentRuns: capacity.maxConcurrentRuns,
       ...(options.observer === undefined ? {} : { observer: options.observer }),
       ...(cursorEnvVars === undefined ? {} : { cursorEnvVars }),
     }),
@@ -197,7 +203,22 @@ export const main = async (argv: readonly string[] = process.argv.slice(2)): Pro
       ineligible: scan.ineligible.map((entry) => ({
         issue: entry.issue.displayId ?? entry.issue.id,
         reason: entry.reason.kind,
+        ...(entry.reason.kind === "blocked-by-capacity"
+          ? {
+              activeRunCount: entry.reason.activeRunCount,
+              maxConcurrentRuns: entry.reason.maxConcurrentRuns,
+            }
+          : {}),
+        ...(entry.reason.kind === "blocked-by-dependency"
+          ? { dependencyId: entry.reason.dependencyId }
+          : {}),
+        ...(entry.reason.kind === "blocked-by-open-child" ? { childId: entry.reason.childId } : {}),
       })),
+      capacity: {
+        activeRunCount: scan.activeRunCount,
+        maxConcurrentRuns: scan.maxConcurrentRuns,
+      },
+      parentRollups: scan.parentRollups,
     });
     return;
   }
