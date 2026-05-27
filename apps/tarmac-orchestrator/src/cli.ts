@@ -2,6 +2,7 @@
 import { createCursorSdkClient, createFakeCursorClient } from "@tarmac/cursor-client";
 
 import { runWithPersistedSession, summarizeWatchResult } from "./cli-persistence";
+import { resolveDashboardOptions, startDashboardServer } from "./dashboard";
 import { CliUsageError } from "./errors";
 import { FpCliClient } from "./fp-client";
 import { buildCursorWorkerEnv, buildHostSecretRedaction, parseCursorMode } from "./launch-config";
@@ -20,7 +21,7 @@ const parseArgs = (argv: readonly string[]): ParsedArgs => {
   const [command, ...rest] = argv;
   if (command === undefined) {
     throw new CliUsageError({
-      messageText: "Usage: tarmac <scan|run-one|reconcile|watch|daemon|status> [options]",
+      messageText: "Usage: tarmac <scan|run-one|reconcile|watch|daemon|status|dashboard> [options]",
     });
   }
 
@@ -158,6 +159,22 @@ const runMaybePersisted = async <T>(
 
 export const main = async (argv: readonly string[] = process.argv.slice(2)): Promise<void> => {
   const parsed = parseArgs(argv);
+
+  if (parsed.command === "dashboard") {
+    const options = resolveDashboardOptions(process.cwd(), parsed.flags);
+    const { url } = startDashboardServer({
+      ...options,
+      redaction: buildHostSecretRedaction(),
+    });
+    process.stderr.write(
+      `Tarmac dashboard listening on ${url} (local-only; bind ${options.host}:${options.port})\n`,
+    );
+    process.stderr.write(
+      "Security: no secrets are sent to the browser; do not expose this port beyond localhost.\n",
+    );
+    await new Promise<void>(() => {});
+    return;
+  }
 
   if (parsed.command === "status") {
     const limit = Number.parseInt(flagString(parsed.flags, "limit") ?? "10", 10);

@@ -21,16 +21,41 @@ bun run tarmac daemon --cursor fake --poll-interval 5
 bun run tarmac status
 bun run tarmac status --limit 5 --events 20
 bun run tarmac scan --cursor fake --persist
+bun run tarmac dashboard
+bun run tarmac dashboard --host 127.0.0.1 --port 3847
 ```
 
-| Flag                | Effect                                                        |
-| ------------------- | ------------------------------------------------------------- |
-| `--no-persist`      | Disable local ledger/events for `watch` / `daemon`            |
-| `--persist`         | Enable local ledger/events for `scan`, `run-one`, `reconcile` |
-| `status --limit N`  | Return the N most recent runs (default 10)                    |
-| `status --events N` | Include the last N structured events per run                  |
+| Flag                       | Effect                                                        |
+| -------------------------- | ------------------------------------------------------------- |
+| `--no-persist`             | Disable local ledger/events for `watch` / `daemon`            |
+| `--persist`                | Enable local ledger/events for `scan`, `run-one`, `reconcile` |
+| `status --limit N`         | Return the N most recent runs (default 10)                    |
+| `status --events N`        | Include the last N structured events per run                  |
+| `dashboard`                | Serve local HTTP dashboard (default `127.0.0.1:3847`)         |
+| `dashboard --no-live-scan` | Read only `.tarmac/` cache; skip live FP scan                 |
 
 `status` prints JSON with `stateRoot` and `runs`. Each run includes stable join keys: local `runId`, `runnerId`, repository `baseSha`, and `eventsPath`.
+
+## Dashboard
+
+The dashboard is a **local-only operator surface**. It does not participate in dispatch and does not mutate FP state.
+
+```bash
+bun run tarmac dashboard
+```
+
+By default it binds to `127.0.0.1:3847`. Open the printed URL in a browser. The UI polls `GET /api/status` every five seconds.
+
+| Endpoint      | Purpose                                                                |
+| ------------- | ---------------------------------------------------------------------- |
+| `/`           | Dense HTML dashboard (scan, bouts, runs, log excerpts)                 |
+| `/api/status` | JSON status payload (scan, parent/child bouts, runs, dispatches, logs) |
+
+Security assumptions:
+
+- Bind to loopback unless you explicitly trust the network.
+- Responses are redacted using the same rules as ledger/events; never expose tokens in HTML or JSON.
+- Use `--no-live-scan` when FP is unavailable or you only want cached `.tarmac/` history.
 
 ## Event types
 
