@@ -58,6 +58,11 @@ installs `fp` into `$HOME/.fiberplane/bin`, updates `PATH` for the current
 install shell, and verifies `bun --version` plus `fp --version`. It does not
 read local shell profiles or print credential values.
 
+The proof defaults to a 30-minute timeout because a fresh Cursor environment may
+need to provision the base image, install Bun, install workspace dependencies,
+install `fp`, and then run the worker prompt. Override with
+`TARMAC_CURSOR_BOOTSTRAP_TIMEOUT_MS` for shorter local debugging loops.
+
 Current local status on 2026-05-26: `cursor-agent status` reports a logged-in
 user, but `cursor-agent models` fails because the macOS login keychain is
 locked. This proof requires an exported `CURSOR_API_KEY`; the CLI keychain path

@@ -24,7 +24,7 @@ const REQUIRED_ENV = [
 ] as const;
 
 const TERMINAL_STATUSES = new Set(["finished", "error", "cancelled"]);
-const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
 const DEFAULT_POLL_INTERVAL_MS = 10 * 1000;
 const MIN_POLL_INTERVAL_MS = 1_000;
 const SECRET_ENV_NAMES = [

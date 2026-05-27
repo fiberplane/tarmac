@@ -28,6 +28,7 @@ secret values.
 - Export `CURSOR_API_KEY`.
 - Export `FP_TOKEN`, `FP_WORKSPACE`, `FP_PROJECT_ID`, and `FP_SERVER_URL`.
 - The local `main` checkout must be clean and match remote `origin/main`.
+- Fresh Cursor environments may need most of the default 30-minute timeout.
 - Do not print token values into terminals, comments, logs, PRs, or artifacts.
 
 ## Steps
