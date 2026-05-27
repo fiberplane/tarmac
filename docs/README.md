@@ -128,7 +128,11 @@ Docs rot when they describe code that changed. To mitigate:
 
 ### architecture/
 
-Architecture notes are added as apps and packages are built. This directory starts empty.
+| Doc                                                                                                  | Topic                                                              |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [architecture/SPEC.md](architecture/SPEC.md)                                                         | Build/spec contract: components, FP domain, dispatch, verification |
+| [architecture/0001-cursor-backed-symphony-loop.md](architecture/0001-cursor-backed-symphony-loop.md) | ADR: Cursor-backed loop vs Codex app-server                        |
+| [architecture/fp-boundary.md](architecture/fp-boundary.md)                                           | `tarmac_*` properties, eligibility, claim, REST/no-clone           |
 
 ### proposals/
 
