@@ -1,5 +1,5 @@
 {
-  "install": "bun install --frozen-lockfile && curl -fsSL https://setup.fp.dev/install.sh | sh -s",
+  "install": "sh ops/cursor/bootstrap-env.sh",
   "start": "",
   "terminals": []
 }

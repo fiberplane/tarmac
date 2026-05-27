@@ -17,6 +17,31 @@ must not be used as a base for Tarmac.
 - The durable artifact is a Cursor-created GitHub PR plus `tarmac_*` FP metadata
   for the first demo.
 
+## Environment Bootstrap
+
+Cursor starts cloud workers from a base environment and then runs the repository
+install command from `.cursor/environment.json`. Tarmac's install command is:
+
+```bash
+sh ops/cursor/bootstrap-env.sh
+```
+
+The script is intentionally checked in instead of inlined in JSON. It installs
+or exposes Bun first, runs `bun install --frozen-lockfile`, installs `fp` into
+`$HOME/.fiberplane/bin`, updates `PATH` in the current install shell, and checks
+`bun --version` plus `fp --version`. It must stay idempotent because Cursor may
+reuse or refresh cached environments.
+
+To reproduce a missing-Bun base image locally without using local shell
+profiles:
+
+```bash
+env -i HOME=/tmp/tarmac-cursor-home PATH=/usr/bin:/bin sh ops/cursor/bootstrap-env.sh
+```
+
+The script may print tool versions and installer diagnostics. Do not add token
+values or secret-dependent commands to this bootstrap path.
+
 ## References
 
 - Cursor Cloud Agent docs: https://cursor.com/docs/cloud-agent

@@ -17,8 +17,9 @@ tags:
 ## Goals
 
 Prove that Cursor Cloud can clone the Tarmac repo, see checked-in Cursor
-configuration, run the expected local tools, and use FP REST/no-clone env vars
-from outside the repo without exposing secret values.
+configuration, run the checked-in environment bootstrap, run the expected local
+tools, and use FP REST/no-clone env vars from outside the repo without exposing
+secret values.
 
 ## Prerequisites
 
@@ -38,8 +39,9 @@ from outside the repo without exposing secret values.
 
 2. Action: Let the Cursor run complete.
    Expected: Cursor verifies `.cursor/environment.json`,
-   `.cursor/skills/fp-ticket/SKILL.md`, `bun --version`, `fp --version`, and
-   `fp issue show` from `/tmp/tarmac-cursor-bootstrap-smoke`.
+   `ops/cursor/bootstrap-env.sh`, `.cursor/skills/fp-ticket/SKILL.md`,
+   `bun --version`, `fp --version`, and `fp issue show` from
+   `/tmp/tarmac-cursor-bootstrap-smoke`.
    Verify: The final run result contains `BOOTSTRAP_SMOKE_OK`.
 
 ## Cleanup

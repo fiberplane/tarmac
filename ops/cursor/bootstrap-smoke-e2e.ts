@@ -99,7 +99,8 @@ const renderPrompt = (issueId: string): string =>
     "Do not print values for CURSOR_API_KEY, FP_TOKEN, GitHub tokens, or dotenv secrets.",
     "",
     "Verify these repo-local checks:",
-    "- `.cursor/environment.json` exists.",
+    "- `.cursor/environment.json` exists and its install command runs `ops/cursor/bootstrap-env.sh`.",
+    "- `ops/cursor/bootstrap-env.sh` exists.",
     "- `.cursor/skills/fp-ticket/SKILL.md` exists.",
     "- `bun --version` runs.",
     "- `fp --version` runs.",
@@ -110,7 +111,7 @@ const renderPrompt = (issueId: string): string =>
     "- Confirm the issue id/title is visible without printing token values.",
     "",
     "When complete, respond with a short JSON object containing:",
-    `{"marker":"BOOTSTRAP_SMOKE_OK","issue":"${issueId}","repoSkills":true,"fpRestRead":true}`,
+    `{"marker":"BOOTSTRAP_SMOKE_OK","issue":"${issueId}","bootstrapScript":true,"repoSkills":true,"fpRestRead":true}`,
   ].join("\n");
 
 const waitForTerminalRun = async (
@@ -148,6 +149,7 @@ const assertNoSensitiveLeaks = (text: string, context: string): void => {
 type BootstrapSmokeResult = {
   readonly marker?: unknown;
   readonly issue?: unknown;
+  readonly bootstrapScript?: unknown;
   readonly repoSkills?: unknown;
   readonly fpRestRead?: unknown;
 };
@@ -173,6 +175,7 @@ const assertBootstrapSmokeResult = (text: string, issueId: string): void => {
   if (
     result.marker !== "BOOTSTRAP_SMOKE_OK" ||
     result.issue !== issueId ||
+    result.bootstrapScript !== true ||
     result.repoSkills !== true ||
     result.fpRestRead !== true
   ) {

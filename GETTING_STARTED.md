@@ -10,7 +10,8 @@ Never place API keys, FP tokens, GitHub tokens, or dotenv secrets in repo files,
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) (see root `package.json` and `.cursor/environment.json`)
+- [Bun](https://bun.sh) for local development. Cursor Cloud workers bootstrap
+  Bun through `ops/cursor/bootstrap-env.sh` before running dependency install.
 - [fp](https://setup.fp.dev) CLI for local issue tracking and orchestrator reads
 - Git 2.54+ if you enable config-based hooks (see [README.md](README.md))
 
@@ -176,6 +177,15 @@ Real dispatch additionally requires:
 - A **clean** working tree and **pushed** local HEAD matching the remote base ref (`repository.ts` with `requireLocalHeadAtRemote`).
 - The GitHub repo **visible** to your Cursor account (private repos must be connected in Cursor settings).
 - Repo bootstrap files: `.cursor/environment.json` (install/start), `.cursor/skills/` (e.g. `fp-ticket`), and agent rules under `AGENTS.md` / `FP_AGENTS.md`.
+
+The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. It
+does not rely on a user shell profile or local `~/.bun`; it installs or exposes
+Bun in the current shell, runs `bun install --frozen-lockfile`, installs `fp`,
+and verifies both CLIs. To diagnose a base image without Bun, run:
+
+```bash
+env -i HOME=/tmp/tarmac-cursor-home PATH=/usr/bin:/bin sh ops/cursor/bootstrap-env.sh
+```
 
 Gated live bootstrap (proves SDK + FP REST from a cloud worker; env gate in `ops/cursor/bootstrap-smoke-e2e.ts`):
 

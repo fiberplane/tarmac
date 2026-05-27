@@ -1,6 +1,6 @@
 # Cursor Cloud Agent Reference
 
-Date captured: 2026-05-26.
+Date captured: 2026-05-27.
 
 Tarmac depends on Cursor Cloud Agents as a durable remote worker, not on Codex
 app-server. Official docs currently describe these useful surfaces:
@@ -9,6 +9,9 @@ app-server. Official docs currently describe these useful surfaces:
   changes back for handoff.
 - Repo setup should live in `.cursor/environment.json`; Cloud Agents also run
   `.cursor/hooks.json` hooks when present.
+- Machine setup starts from Cursor's base environment, then runs the
+  repository's `install` command. That command must be idempotent and cannot
+  assume project-specific tools such as Bun are already on `PATH`.
 - The current REST API is run-based: create a durable agent with
   `POST /v1/agents`, create follow-up runs with `POST /v1/agents/{id}/runs`,
   poll `GET /v1/agents/{id}/runs/{runId}`, and stream with
@@ -46,8 +49,14 @@ Required env names are `CURSOR_API_KEY`, `FP_TOKEN`, `FP_WORKSPACE`,
 `CURSOR_REMOTE_NAME/main` (default `origin/main`), refuses real launch from a
 dirty or unpushed checkout, starts Cursor from the verified branch name, sends
 FP REST env through Cursor SDK `cloud.envVars`, and asks the cloud worker to
-verify `.cursor` files,
-`bun --version`, `fp --version`, and `fp issue show` from `/tmp`.
+verify `.cursor` files, `ops/cursor/bootstrap-env.sh`, `bun --version`,
+`fp --version`, and `fp issue show` from `/tmp`.
+
+The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. The
+script installs or exposes Bun before running `bun install --frozen-lockfile`,
+installs `fp` into `$HOME/.fiberplane/bin`, updates `PATH` for the current
+install shell, and verifies `bun --version` plus `fp --version`. It does not
+read local shell profiles or print credential values.
 
 Current local status on 2026-05-26: `cursor-agent status` reports a logged-in
 user, but `cursor-agent models` fails because the macOS login keychain is
