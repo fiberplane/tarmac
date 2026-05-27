@@ -34,6 +34,7 @@ import {
   MissingRunMetadataError,
 } from "./errors";
 import type { FpClient, OrchestratorIssue } from "./fp-client";
+import type { OrchestratorObserver } from "./local-state/observer";
 
 export type ScanResult = {
   readonly eligible: readonly OrchestratorIssue[];
@@ -68,6 +69,7 @@ export type OrchestratorOptions = {
   readonly claimSet?: SameProcessClaimSet;
   readonly redaction?: PromptRedactionConfig;
   readonly cursorEnvVars?: Readonly<Record<string, string>>;
+  readonly observer?: OrchestratorObserver;
 };
 
 export class TarmacOrchestrator {
@@ -78,6 +80,7 @@ export class TarmacOrchestrator {
   readonly #claimSet: SameProcessClaimSet;
   readonly #redaction: PromptRedactionConfig | undefined;
   readonly #cursorEnvVars: Readonly<Record<string, string>> | undefined;
+  readonly #observer: OrchestratorObserver | undefined;
 
   constructor(options: OrchestratorOptions) {
     this.#fpClient = options.fpClient;
@@ -87,9 +90,11 @@ export class TarmacOrchestrator {
     this.#claimSet = options.claimSet ?? new SameProcessClaimSet();
     this.#cursorEnvVars = options.cursorEnvVars;
     this.#redaction = mergeRedaction(options.redaction, options.cursorEnvVars);
+    this.#observer = options.observer;
   }
 
   async scan(): Promise<ScanResult> {
+    await this.#observer?.onScanStarted?.();
     const issues = await this.#fpClient.listIssues();
     const openIssueIndex = buildOpenIssueIndex(issues);
     const runningIssueIds = new Set<string>();
@@ -111,10 +116,12 @@ export class TarmacOrchestrator {
       }
     }
 
-    return {
+    const result = {
       eligible,
       ineligible,
     };
+    await this.#observer?.onScanFinished?.(result);
+    return result;
   }
 
   async runOne(issueId: string): Promise<DispatchResult> {
@@ -135,14 +142,19 @@ export class TarmacOrchestrator {
     }
 
     if (!this.#claimSet.acquire(issue.id)) {
+      const reason = "same-process-claim-exists";
+      await this.#observer?.onClaimLost?.(issue, reason);
       throw new ClaimLostError({
         issueId: issue.id,
-        reason: "same-process-claim-exists",
+        reason,
       });
     }
 
     try {
-      const claimId = await this.#claimIssue(issue);
+      await this.#observer?.onClaimAttempt?.(issue);
+      const claim = await this.#claimIssue(issue);
+      const claimId = claim.claimId;
+      await this.#observer?.onClaimSuccess?.(issue, claimId, claim.attempt);
       const claimedIssue = await this.#fpClient.getIssue(issue.id);
       const prompt = renderWorkerPrompt({
         issue: {
@@ -171,16 +183,16 @@ export class TarmacOrchestrator {
           idempotencyKey: claimId,
           ...(this.#cursorEnvVars === undefined ? {} : { envVars: this.#cursorEnvVars }),
         });
+        await this.#observer?.onCursorLaunch?.(claimedIssue, claimId, cursorRun);
       } catch (cause) {
-        await this.#recordDispatchFailure(claimedIssue.id, cause);
+        await this.#recordDispatchFailure(claimedIssue, cause, "pre-launch");
         throw cause;
       }
 
       try {
-        await this.#fpClient.updateIssue(
-          claimedIssue.id,
-          updateFromCursorRun(claimedIssue, cursorRun, this.#repository.baseSha),
-        );
+        const update = updateFromCursorRun(claimedIssue, cursorRun, this.#repository.baseSha);
+        await this.#fpClient.updateIssue(claimedIssue.id, update);
+        await this.#observer?.onMetadataPersisted?.(claimedIssue, update, claimId, cursorRun);
         await this.#maybeCommentCursorRunLaunch(claimedIssue, cursorRun);
         return {
           issue: claimedIssue,
@@ -189,9 +201,14 @@ export class TarmacOrchestrator {
           cursorRun,
         };
       } catch (cause) {
-        await this.#recordPostLaunchPersistenceFailure(claimedIssue.id, cursorRun, cause);
+        await this.#recordPostLaunchPersistenceFailure(claimedIssue, cursorRun, cause);
         throw cause;
       }
+    } catch (cause) {
+      if (cause instanceof ClaimLostError) {
+        await this.#observer?.onClaimLost?.(issue, cause.reason);
+      }
+      throw cause;
     } finally {
       this.#claimSet.release(issue.id);
     }
@@ -199,6 +216,7 @@ export class TarmacOrchestrator {
 
   async reconcile(issueId: string): Promise<ReconcileResult> {
     const issue = await this.#fpClient.getIssue(issueId);
+    await this.#observer?.onReconcileStarted?.(issue);
     const decoded = decodeTarmacProperties(issue.properties);
     if (decoded.kind === "invalid") {
       throw new MissingRunMetadataError({
@@ -220,6 +238,13 @@ export class TarmacOrchestrator {
     });
     const update = updateFromCursorRun(issue, cursorRun, this.#repository.baseSha);
     await this.#fpClient.updateIssue(issue.id, update);
+    await this.#observer?.onReconcileFinished?.(
+      {
+        issue,
+        cursorRun,
+      },
+      update,
+    );
     await this.#maybeCommentTerminalReconcile(issue, cursorRun, update);
 
     return {
@@ -241,6 +266,7 @@ export class TarmacOrchestrator {
 
     while (iterations < maxIterations) {
       iterations += 1;
+      await this.#observer?.onWatchIteration?.(iterations);
       const scan = await this.scan();
       for (const issue of scan.eligible) {
         dispatched.push(await this.runOne(issue.displayId ?? issue.id));
@@ -259,7 +285,9 @@ export class TarmacOrchestrator {
     };
   }
 
-  async #claimIssue(issue: OrchestratorIssue): Promise<string> {
+  async #claimIssue(
+    issue: OrchestratorIssue,
+  ): Promise<{ readonly claimId: string; readonly attempt: number }> {
     const decoded = decodeTarmacProperties(issue.properties);
     const previousAttempt =
       decoded.kind === "valid" ? Number.parseInt(decoded.properties.attempt ?? "0", 10) : 0;
@@ -282,12 +310,20 @@ export class TarmacOrchestrator {
       });
     }
 
-    return claimId;
+    return {
+      claimId,
+      attempt,
+    };
   }
 
-  async #recordDispatchFailure(issueId: string, cause: unknown): Promise<void> {
+  async #recordDispatchFailure(
+    issue: OrchestratorIssue,
+    cause: unknown,
+    stage: "pre-launch" | "post-launch",
+  ): Promise<void> {
     const lastError = redactFailure(cause, this.#redaction);
-    await this.#fpClient.updateIssue(issueId, {
+    await this.#observer?.onDispatchFailed?.(issue, stage, lastError);
+    await this.#fpClient.updateIssue(issue.id, {
       status: "in-progress",
       properties: {
         tarmac_state: "needs-attention",
@@ -295,13 +331,13 @@ export class TarmacOrchestrator {
       },
     });
     await this.#fpClient.commentIssue(
-      issueId,
+      issue.id,
       `Tarmac dispatch failed before Cursor handoff: ${lastError}`,
     );
   }
 
   async #recordPostLaunchPersistenceFailure(
-    issueId: string,
+    issue: OrchestratorIssue,
     run: CursorRunSnapshot,
     cause: unknown,
   ): Promise<void> {
@@ -309,13 +345,14 @@ export class TarmacOrchestrator {
       cause,
       this.#redaction,
     )}`;
-    await this.#fpClient.updateIssue(issueId, {
+    await this.#observer?.onDispatchFailed?.(issue, "post-launch", lastError);
+    await this.#fpClient.updateIssue(issue.id, {
       status: "in-progress",
       properties: postLaunchFailureProperties(run, this.#repository.baseSha, lastError),
     });
     const cursorUrl = cursorRunUrlFor(run);
     await this.#fpClient.commentIssue(
-      issueId,
+      issue.id,
       `Cursor launched (${cursorUrl}), but Tarmac failed to persist terminal metadata. Run metadata was recorded for reconciliation: ${lastError}`,
     );
   }
