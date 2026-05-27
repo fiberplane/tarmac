@@ -47,4 +47,5 @@ fp guide
   descriptions.
 - `bun run check` runs oxlint, ast-grep, drift, and typecheck.
 - Git 2.54 config-based hooks run staged linting and drift checks when enabled.
-- The thermonuclear review skill is vendored under `.agents/skills/`.
+- The thermonuclear review skill is vendored under `.agents/skills/`; PRs use
+  `.github/pull_request_template.md` to record that review (separate from CI).

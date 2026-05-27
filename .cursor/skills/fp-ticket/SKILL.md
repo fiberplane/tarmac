@@ -65,14 +65,19 @@ Load these only when needed:
 
 6. **Review gate**
    - Review your own diff for correctness, security, test risk, and unrelated changes.
-   - Run available strict/code-review subagents or skills.
+   - Run `.agents/skills/thermo-nuclear-code-quality-review/SKILL.md` on the branch diff.
+   - Fill in `.github/pull_request_template.md` thermo-nuclear attestation (findings and why any
+     were accepted, rejected, or deferred). This is not CI — do not claim `bun run check` replaces
+     it.
+   - Run other strict/code-review subagents or skills when available.
    - Fix justified findings and record material false positives or residual risks.
 
 7. **Commit and open PR**
    - Commit verified changes and push the branch.
    - Read [references/pr-babysitting.md](references/pr-babysitting.md).
    - Open a full non-draft PR unless the user explicitly asks for a draft.
-   - Include fp issue ID(s), summary, verification, review passes, evidence links when relevant, and known warnings or handoff reasons.
+   - Include fp issue ID(s), summary, verification, completed thermo-nuclear attestation, other
+     review passes, evidence links when relevant, and known warnings or handoff reasons.
 
 8. **Babysit PR**
    - Loop on checks, mergeability, review feedback, and review-bot feedback.

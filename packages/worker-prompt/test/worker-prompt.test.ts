@@ -65,6 +65,8 @@ describe("renderWorkerPrompt", () => {
     expect(prompt).toContain("Issue: TARM-1");
     expect(prompt).toContain("Required base SHA: abc123");
     expect(prompt).toContain("FP remote no-clone access");
+    expect(prompt).toContain("thermo-nuclear-code-quality-review");
+    expect(prompt).toContain("pull_request_template.md");
     expect(prompt).toContain("Cursor auto PR creation is enabled");
     expect(prompt).toContain("tarmac state to needs-attention");
   });
