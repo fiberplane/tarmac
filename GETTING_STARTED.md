@@ -70,7 +70,7 @@ bun apps/tarmac-orchestrator/src/cli.ts scan --cursor fake
 | **Fake** | `fake`     | None for Cursor; local `fp` must work from repo root     | Uses `git` remotes for context; does not require a pushed HEAD                                                                 |
 | **Real** | `real`     | `CURSOR_API_KEY` on host; worker FP REST env (see below) | Local HEAD must match remote `CURSOR_BASE_REF` (default `main`) on `CURSOR_REMOTE_NAME` (default `origin`); working tree clean |
 
-Real mode builds worker env from `apps/tarmac-orchestrator/src/launch-config.ts`: `FP_REMOTE=rest`, `FP_TOKEN`, `FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`, and optional `FP_PROJECT_PREFIX`. Repository resolution: `apps/tarmac-orchestrator/src/repository.ts`. Cursor SDK dispatch: `packages/cursor-client/src/sdk-client.ts`.
+Real mode builds worker env from `apps/tarmac-orchestrator/src/launch-config.ts`: `FP_REMOTE=rest-api`, `FP_TOKEN`, `FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`, and optional `FP_PROJECT_PREFIX`. Repository resolution: `apps/tarmac-orchestrator/src/repository.ts`. Cursor SDK dispatch: `packages/cursor-client/src/sdk-client.ts`.
 
 ## First run: local fake dispatch
 
@@ -117,7 +117,7 @@ fp project link <remote-project-id>
 fp project test-connection
 ```
 
-`fp project remote --format json` is the source for non-secret REST variables (`FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`, optional `FP_PROJECT_PREFIX`). The canonical REST mode flag is `FP_REMOTE=rest` (see `launch-config.ts`).
+`fp project remote --format json` is the source for non-secret REST variables (`FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`, optional `FP_PROJECT_PREFIX`). The canonical REST mode flag is `FP_REMOTE=rest-api` (see `launch-config.ts`).
 
 ### Local FP registry and project files
 
@@ -168,7 +168,7 @@ Host-side setup lives under `ops/cursor/`. Copy `ops/cursor/.env.example` to `op
 
 Pass **worker** FP REST variables through Cursor Cloud `envVars` (see `launch-config.ts`), not through the worker prompt:
 
-- `FP_REMOTE=rest`
+- `FP_REMOTE=rest-api`
 - `FP_TOKEN`, `FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`
 - optional `FP_PROJECT_PREFIX`
 

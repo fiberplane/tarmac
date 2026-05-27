@@ -109,7 +109,7 @@ const renderPrompt = (issueId: string): string =>
     "fp --version >/tmp/tarmac-cursor-fp-version",
     "mkdir -p /tmp/tarmac-cursor-bootstrap-smoke",
     "cd /tmp/tarmac-cursor-bootstrap-smoke",
-    `FP_REMOTE=rest fp issue show ${issueId} --format json >/tmp/tarmac-cursor-fp-issue.json`,
+    `FP_REMOTE=rest-api fp issue show ${issueId} --format json >/tmp/tarmac-cursor-fp-issue.json`,
     `grep -q '${issueId}' /tmp/tarmac-cursor-fp-issue.json`,
     "```",
     "",
