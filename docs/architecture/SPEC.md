@@ -173,7 +173,7 @@ Before launch the orchestrator **MUST**:
 3. Build the worker prompt via `@tarmac/worker-prompt` including issue context and
    the required base SHA.
 4. Pass FP REST env to Cursor only through supported worker env mechanisms in
-   **real** mode (`FP_REMOTE=[REDACTED]` plus required FP vars)—never embed tokens
+   **real** mode (`FP_REMOTE=rest-api` plus required FP vars)—never embed tokens
    in the prompt text.
 5. Launch via `CursorAgentClient` (`@cursor/sdk`), not legacy `/v0/agents`.
 
@@ -248,7 +248,7 @@ No automatic retry in the prototype.
 | FP vars for orchestrator    | yes         | Local `fp` project link for scan/claim        |
 | `GITHUB_TOKEN` / `GH_TOKEN` | optional    | Host redaction list only; not prompt-embedded |
 
-Worker FP env for real mode **MUST** include: `FP_REMOTE=[REDACTED]`, `FP_TOKEN`,
+Worker FP env for real mode **MUST** include: `FP_REMOTE=rest-api`, `FP_TOKEN`,
 `FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`; **MAY** include
 `FP_PROJECT_PREFIX`.
 
