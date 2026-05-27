@@ -1,6 +1,5 @@
-import { Schema } from "effect";
-
 import { redactSensitiveText, type PromptRedactionConfig } from "@tarmac/worker-prompt";
+import { Schema } from "effect";
 
 export const redactUnknown = (
   value: unknown,

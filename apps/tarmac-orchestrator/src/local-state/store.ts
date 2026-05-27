@@ -1,20 +1,20 @@
 import { randomUUID } from "node:crypto";
 
-import { Schema } from "effect";
 import type { PromptRedactionConfig } from "@tarmac/worker-prompt";
+import { Schema } from "effect";
 
 import { appendJsonlLine, readJsonlFile } from "./jsonl";
-import {
-  PersistedOrchestratorEventSchema,
-  RunLedgerRecordSchema,
-  RunSummarySchema,
-} from "./schemas";
 import {
   eventsPathRelativeToStateRoot,
   resolveRunEventsPath,
   resolveRunsLedgerPath,
 } from "./paths";
 import { redactUnknown } from "./redact";
+import {
+  PersistedOrchestratorEventSchema,
+  RunLedgerRecordSchema,
+  RunSummarySchema,
+} from "./schemas";
 import type {
   OrchestratorEvent,
   RunCommand,
@@ -156,9 +156,7 @@ export class LocalRunStore {
             : { cursorMode: existing.cursorMode }
           : { cursorMode: record.cursorMode }),
         eventsPath: record.eventsPath,
-        ...(record.summary === undefined
-          ? {}
-          : { summary: normalizeRunSummary(record.summary) }),
+        ...(record.summary === undefined ? {} : { summary: normalizeRunSummary(record.summary) }),
       });
     }
 
@@ -270,7 +268,9 @@ export class RunSession {
       options.summary === undefined
         ? undefined
         : normalizeRunSummary(
-            Schema.decodeUnknownSync(RunSummarySchema)(redactUnknown(options.summary, this.#redaction)),
+            Schema.decodeUnknownSync(RunSummarySchema)(
+              redactUnknown(options.summary, this.#redaction),
+            ),
           );
 
     await this.record({
