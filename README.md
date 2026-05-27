@@ -1,3 +1,5 @@
+<img width="2560" height="1280" alt="TM Image" src="https://github.com/user-attachments/assets/05235b1e-92cc-404a-bba0-d0862b187d3e" />
+
 # tarmac
 
 Tarmac is an FP + Cursor Cloud Agent prototype. The demo target is:
