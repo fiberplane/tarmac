@@ -3,14 +3,18 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 import type { CursorClient, CursorRunSnapshot } from "@tarmac/cursor-client";
 import {
+  buildActiveRunSnapshot,
   buildOpenIssueIndex,
   confirmClaimOwnership,
   createClaimId,
   createClaimUpdate,
   decodeTarmacProperties,
   isEligible,
+  partitionByCapacity,
+  rollupParentBouts,
   SameProcessClaimSet,
   type IneligibilityReason,
+  type ParentBoutRollup,
   type TarmacIssueUpdate,
   type TarmacPropertyKey,
 } from "@tarmac/fp-domain";
@@ -42,6 +46,9 @@ export type ScanResult = {
     readonly issue: OrchestratorIssue;
     readonly reason: IneligibilityReason;
   }[];
+  readonly activeRunCount: number;
+  readonly maxConcurrentRuns: number;
+  readonly parentRollups: readonly ParentBoutRollup[];
 };
 
 export type DispatchResult = {
@@ -67,6 +74,7 @@ export type OrchestratorOptions = {
   readonly repository: WorkerRepositoryContext;
   readonly runnerId?: string;
   readonly claimSet?: SameProcessClaimSet;
+  readonly maxConcurrentRuns?: number;
   readonly redaction?: PromptRedactionConfig;
   readonly cursorEnvVars?: Readonly<Record<string, string>>;
   readonly observer?: OrchestratorObserver;
@@ -78,6 +86,7 @@ export class TarmacOrchestrator {
   readonly #repository: WorkerRepositoryContext;
   readonly #runnerId: string;
   readonly #claimSet: SameProcessClaimSet;
+  readonly #maxConcurrentRuns: number;
   readonly #redaction: PromptRedactionConfig | undefined;
   readonly #cursorEnvVars: Readonly<Record<string, string>> | undefined;
   readonly #observer: OrchestratorObserver | undefined;
@@ -88,6 +97,7 @@ export class TarmacOrchestrator {
     this.#repository = options.repository;
     this.#runnerId = options.runnerId ?? `tarmac-${process.pid}`;
     this.#claimSet = options.claimSet ?? new SameProcessClaimSet();
+    this.#maxConcurrentRuns = options.maxConcurrentRuns ?? 1;
     this.#cursorEnvVars = options.cursorEnvVars;
     this.#redaction = mergeRedaction(options.redaction, options.cursorEnvVars);
     this.#observer = options.observer;
@@ -97,8 +107,9 @@ export class TarmacOrchestrator {
     await this.#observer?.onScanStarted?.();
     const issues = await this.#fpClient.listIssues();
     const openIssueIndex = buildOpenIssueIndex(issues);
-    const runningIssueIds = new Set<string>();
-    const eligible: OrchestratorIssue[] = [];
+    const activeRuns = buildActiveRunSnapshot(issues, this.#claimSet);
+    const runningIssueIds = new Set(activeRuns.issueIds);
+    const capacityEligible: OrchestratorIssue[] = [];
     const ineligible: Array<{
       issue: OrchestratorIssue;
       reason: IneligibilityReason;
@@ -107,7 +118,7 @@ export class TarmacOrchestrator {
     for (const issue of issues) {
       const result = isEligible(issue, openIssueIndex, runningIssueIds);
       if (result.kind === "eligible") {
-        eligible.push(issue);
+        capacityEligible.push(issue);
       } else {
         ineligible.push({
           issue,
@@ -116,9 +127,29 @@ export class TarmacOrchestrator {
       }
     }
 
+    const { dispatchable, deferred } = partitionByCapacity(
+      capacityEligible,
+      activeRuns.count,
+      this.#maxConcurrentRuns,
+    );
+
+    for (const issue of deferred) {
+      ineligible.push({
+        issue,
+        reason: {
+          kind: "blocked-by-capacity",
+          activeRunCount: activeRuns.count,
+          maxConcurrentRuns: this.#maxConcurrentRuns,
+        },
+      });
+    }
+
     const result = {
-      eligible,
+      eligible: dispatchable,
       ineligible,
+      activeRunCount: activeRuns.count,
+      maxConcurrentRuns: this.#maxConcurrentRuns,
+      parentRollups: rollupParentBouts(issues),
     };
     await this.#observer?.onScanFinished?.(result);
     return result;
@@ -269,6 +300,14 @@ export class TarmacOrchestrator {
       await this.#observer?.onWatchIteration?.(iterations);
       const scan = await this.scan();
       for (const issue of scan.eligible) {
+        const activeRuns = buildActiveRunSnapshot(
+          await this.#fpClient.listIssues(),
+          this.#claimSet,
+        );
+        if (activeRuns.count >= this.#maxConcurrentRuns) {
+          break;
+        }
+
         dispatched.push(await this.runOne(issue.displayId ?? issue.id));
       }
 

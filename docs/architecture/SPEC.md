@@ -141,7 +141,9 @@ An issue **MUST** be treated as dispatch-eligible only when **all** hold:
 5. Issue ID is not in the orchestrator's same-process active run index.
 6. No `tarmac_agent_id` or `tarmac_run_id` is set unless reconcile has proven
    the prior run terminal and the issue is human re-armed.
-7. All present `tarmac_*` properties decode per `@tarmac/fp-domain` schemas.
+7. Global active Cursor runs are below `TARMAC_MAX_CONCURRENT_RUNS` (see
+   [dispatch-capacity-and-bouts.md](../reference/dispatch-capacity-and-bouts.md)).
+8. All present `tarmac_*` properties decode per `@tarmac/fp-domain` schemas.
 
 Reference implementation: `packages/fp-domain/src/eligibility.ts`.
 
@@ -241,12 +243,13 @@ No automatic retry in the prototype.
 
 ### Orchestrator (host)
 
-| Variable                    | Required    | Role                                          |
-| --------------------------- | ----------- | --------------------------------------------- |
-| `CURSOR_API_KEY`            | real mode   | Host-only Cursor API access                   |
-| `CURSOR_BASE_REF`           | recommended | Base branch/ref resolved to `tarmac_base_sha` |
-| FP vars for orchestrator    | yes         | Local `fp` project link for scan/claim        |
-| `GITHUB_TOKEN` / `GH_TOKEN` | optional    | Host redaction list only; not prompt-embedded |
+| Variable                     | Required    | Role                                                 |
+| ---------------------------- | ----------- | ---------------------------------------------------- |
+| `CURSOR_API_KEY`             | real mode   | Host-only Cursor API access                          |
+| `CURSOR_BASE_REF`            | recommended | Base branch/ref resolved to `tarmac_base_sha`        |
+| `TARMAC_MAX_CONCURRENT_RUNS` | optional    | Global cap on simultaneous Cursor runs (default `1`) |
+| FP vars for orchestrator     | yes         | Local `fp` project link for scan/claim               |
+| `GITHUB_TOKEN` / `GH_TOKEN`  | optional    | Host redaction list only; not prompt-embedded        |
 
 Worker FP env for real mode **MUST** include: `FP_REMOTE=rest-api`, `FP_TOKEN`,
 `FP_WORKSPACE`, `FP_PROJECT_ID`, `FP_SERVER_URL`; **MAY** include
