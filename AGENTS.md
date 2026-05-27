@@ -13,6 +13,9 @@ as the tracker and Cursor Cloud Agents as the worker runtime.
 - Cursor workers own code changes after handoff: they should push a branch, open
   or update a PR, record PR metadata in FP, and mark their issue terminal only
   after verification.
+- Before opening or updating a PR, run the thermo-nuclear maintainability review
+  skill and fill in the PR template attestation (`.github/pull_request_template.md`).
+  That evidence is separate from CI: `bun run check` does not substitute for it.
 - The local orchestrator owns pre-handoff eligibility, claiming, dispatch, and
   recovery from launch failures.
 
@@ -40,6 +43,8 @@ installed yet, record that in the relevant fp issue comment.
   and writer boundaries.
 - `.agents/skills/fp-task/SKILL.md` is the local issue implementation workflow.
 - `.agents/skills/thermo-nuclear-code-quality-review/SKILL.md` is the strict
-  maintainability review rubric.
+  maintainability review rubric (also mirrored under `.cursor/skills/`).
+- `.github/pull_request_template.md` asks PR authors for thermo-nuclear review
+  evidence; it is not an automated gate.
 
 @FP_AGENTS.md
