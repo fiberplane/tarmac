@@ -25,7 +25,7 @@ fp tree             # inspect work
 bun run tarmac scan --cursor fake
 ```
 
-Architecture: [docs/architecture/0001-cursor-backed-symphony-loop.md](docs/architecture/0001-cursor-backed-symphony-loop.md) · FP boundaries: [docs/architecture/fp-boundary.md](docs/architecture/fp-boundary.md)
+Spec: [docs/architecture/SPEC.md](docs/architecture/SPEC.md) · Architecture: [docs/architecture/0001-cursor-backed-symphony-loop.md](docs/architecture/0001-cursor-backed-symphony-loop.md) · FP boundaries: [docs/architecture/fp-boundary.md](docs/architecture/fp-boundary.md)
 
 ## Setup
 
@@ -47,4 +47,5 @@ fp guide
   descriptions.
 - `bun run check` runs oxlint, ast-grep, drift, and typecheck.
 - Git 2.54 config-based hooks run staged linting and drift checks when enabled.
-- The thermonuclear review skill is vendored under `.agents/skills/`.
+- The thermonuclear review skill is vendored under `.agents/skills/`; PRs use
+  `.github/pull_request_template.md` to record that review (separate from CI).

@@ -53,6 +53,7 @@ export const renderWorkerPrompt = (input: WorkerPromptInput): string => {
     "- Leave unrelated user work untouched.",
     "",
     "Completion Expectations:",
+    "- Before opening or updating a PR, run `.agents/skills/thermo-nuclear-code-quality-review/SKILL.md` and complete the thermo-nuclear section in `.github/pull_request_template.md` (human/agent attestation, not CI).",
     "- Cursor auto PR creation is enabled; use the PR Cursor creates.",
     "- Update FP with branch, PR URL, head SHA, and terminal tarmac state when those values are available.",
     "- If blocked, add a concise FP comment and set tarmac state to needs-attention with a redacted error.",

@@ -51,13 +51,16 @@ Read linked specs and local docs before writing code. Let existing repo patterns
 Review is mandatory for implementation work unless the user explicitly opts out or the current
 environment cannot run subagents.
 
-1. Ask a review subagent to inspect the diff for correctness, missed requirements, regressions,
+1. Run `.agents/skills/thermo-nuclear-code-quality-review/SKILL.md` on the branch diff before
+   opening or updating a PR. Record findings in the PR template attestation (human/agent evidence,
+   not CI).
+2. Ask a review subagent to inspect the diff for correctness, missed requirements, regressions,
    and test gaps.
-2. If a review skill or plugin is available, instruct the subagent to use it.
-3. Give the reviewer issue context, acceptance criteria, and the current diff. Do not ask for a
+3. If a review skill or plugin is available, instruct the subagent to use it.
+4. Give the reviewer issue context, acceptance criteria, and the current diff. Do not ask for a
    rubber stamp.
-4. Address actionable findings before final verification. If a finding is intentionally not
-   addressed, explain why in the final fp comment.
+5. Address actionable findings before final verification. If a finding is intentionally not
+   addressed, explain why in the final fp comment and in the PR thermo-nuclear section.
 
 If subagents are unavailable, state that exception clearly, perform a structured self-review, and
 ask for human or subagent-capable review before marking the issue done unless the user tells you to
