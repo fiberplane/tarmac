@@ -1,10 +1,10 @@
 <img width="2560" height="1280" alt="TM Image" src="https://github.com/user-attachments/assets/05235b1e-92cc-404a-bba0-d0862b187d3e" />
 
-# tarmac
+# Tarmac
 
-Tarmac is an FP + Cursor Cloud Agent prototype. The demo target is:
+Tarmac is an [FP, agent-native issue tracking](https://fp.dev) + Cursor Cloud Agent prototype. The demo target is:
 
-1. A human marks an FP issue ready for dispatch (`tarmac_ready=true`; the desktop UI may show **Ready** / **Not Ready** as labels only).
+1. A human marks an [FP](https://fp.dev) issue ready for dispatch (`tarmac_ready=true`; the desktop UI may show **Ready** / **Not Ready** as labels only).
 2. A Tarmac orchestrator detects the eligible issue.
 3. The orchestrator dispatches a Cursor Cloud Agent with FP no-clone REST context.
 4. The Cursor worker pushes a branch, opens a PR, records FP metadata, and closes
@@ -16,7 +16,7 @@ durable cloud-agent API and GitHub PR workflow.
 
 ## Getting Started
 
-**[GETTING_STARTED.md](GETTING_STARTED.md)** — install, FP project link, orchestrator commands (`scan`, `run-one`, `watch`, `reconcile`), fake vs real Cursor mode, REST env setup, and adding Tarmac to another repo.
+**[GETTING_STARTED.md](GETTING_STARTED.md)** — install, [FP](https://fp.dev) project link, orchestrator commands (`scan`, `run-one`, `watch`, `reconcile`), fake vs real Cursor mode, REST env setup, and adding Tarmac to another repo.
 
 Fast path:
 
@@ -45,7 +45,7 @@ fp guide
 
 ## Guardrails
 
-- FP extensions register the `tarmac_*` property surface and block empty issue
+- [FP extensions](https://fp.dev/docs/extensions/overview/) register the `tarmac_*` property surface and block empty issue
   descriptions.
 - `bun run check` runs oxlint, ast-grep, drift, and typecheck.
 - Git 2.54 config-based hooks run staged linting and drift checks when enabled.
