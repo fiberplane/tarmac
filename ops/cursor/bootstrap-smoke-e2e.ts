@@ -107,6 +107,7 @@ const renderPrompt = (issueId: string): string =>
     "test -f .cursor/skills/fp-ticket/SKILL.md",
     "bun --version >/tmp/tarmac-cursor-bun-version",
     "fp --version >/tmp/tarmac-cursor-fp-version",
+    "drift --version >/tmp/tarmac-cursor-drift-version",
     "mkdir -p /tmp/tarmac-cursor-bootstrap-smoke",
     "cd /tmp/tarmac-cursor-bootstrap-smoke",
     `FP_REMOTE=rest-api fp issue show ${issueId} --format json >/tmp/tarmac-cursor-fp-issue.json`,

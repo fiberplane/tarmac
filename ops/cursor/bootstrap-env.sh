@@ -116,6 +116,19 @@ install_fp() {
   expose_on_base_path fp "$FP_INSTALL_DIR/fp"
 }
 
+install_drift() {
+  drift_version="${DRIFT_VERSION:-v0.10.0}"
+  export DRIFT_INSTALL_DIR="${DRIFT_INSTALL_DIR:-$HOME/.local/bin}"
+  export PATH="$DRIFT_INSTALL_DIR:$PATH"
+
+  require_command curl
+
+  log "Installing drift CLI $drift_version"
+  curl -fsSL https://drift.fp.dev/install.sh | sh -s -- --version "$drift_version" --install-dir "$DRIFT_INSTALL_DIR"
+  export PATH="$DRIFT_INSTALL_DIR:$PATH"
+  expose_on_base_path drift "$DRIFT_INSTALL_DIR/drift"
+}
+
 verify_command() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 was not found after bootstrap"
   version="$("$1" --version)" || fail "$1 --version failed after bootstrap"
@@ -130,5 +143,8 @@ bun install --frozen-lockfile
 
 install_fp
 verify_command fp
+
+install_drift
+verify_command drift
 
 log "Cursor bootstrap completed"

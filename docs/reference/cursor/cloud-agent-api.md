@@ -50,16 +50,17 @@ Required env names are `CURSOR_API_KEY`, `FP_TOKEN`, `FP_WORKSPACE`,
 dirty or unpushed checkout, starts Cursor from the verified branch name, sends
 FP REST env through Cursor SDK `cloud.envVars`, and asks the cloud worker to
 verify `.cursor` files, `ops/cursor/bootstrap-env.sh`, `bun --version`,
-`fp --version`, and `fp issue show` from `/tmp`.
+`fp --version`, `drift --version`, and `fp issue show` from `/tmp`.
 
 The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. The
 script installs or exposes Bun before running `bun install --frozen-lockfile`,
 installs REST-capable `fp` `0.24.0-next.85d878d` into
-`$HOME/.fiberplane/bin`, updates `PATH` for the current install shell, exposes
-`bun` and `fp` through the base `PATH` for later worker shells, and verifies
-`bun --version` plus `fp --version`. It does not read local shell profiles or
-print credential values. Set `FP_VERSION` before bootstrap only when the pinned
-REST-capable version needs to change.
+`$HOME/.fiberplane/bin`, installs `drift` `v0.10.0` into `$HOME/.local/bin`,
+updates `PATH` for the current install shell, exposes `bun`, `fp`, and `drift`
+through the base `PATH` for later worker shells, and verifies `bun --version`,
+`fp --version`, plus `drift --version`. It does not read local shell profiles or
+print credential values. Set `FP_VERSION` or `DRIFT_VERSION` before bootstrap
+only when the pinned versions need to change.
 
 The proof defaults to a 30-minute timeout because a fresh Cursor environment may
 need to provision the base image, install Bun, install workspace dependencies,
