@@ -97,10 +97,14 @@ Useful flags:
 
 ### 4. What to show in the UI
 
-- **Scan**: eligible vs ineligible issues and reasons.
-- **Bouts**: parent rollups (open children, active child runs).
-- **Runs**: local session cards with `runId`, `runnerId`, `baseSha`.
-- **Dispatches / logs**: redacted lifecycle excerpts (`cursor.launch`, `metadata.persisted`, failures).
+- **Issue queue**: grouped Active, Needs attention, Eligible, Blocked, Done, and Unknown buckets (display labels only).
+- **Issue detail**: selected issue FP/tarmac fields, links, and last error.
+- **Bout rollup**: parent rollups with child eligibility, runs, and PR links.
+- **Run ledger**: local session cards from `.tarmac/runs.jsonl` with command, status, and summary counts.
+- **Dispatch timeline**: structured events from persisted run events (not parsed log strings).
+- **Logs**: redacted monospace rows from `.tarmac/runs/<run-id>/events.jsonl`.
+
+Refresh is the only dashboard command. Scan/Run/Reconcile/Watch controls are not exposed.
 
 Open FP issue rows and follow inferred **Cursor** links only when `tarmac_agent_id` / `tarmac_cursor_url` are populated (fake mode uses deterministic fake IDs).
 
@@ -205,7 +209,7 @@ Assumes repo is installed, FP initialized, and at least one parent with two chil
 | 3    | `bun run tarmac scan --cursor fake`                           | JSON eligibility, capacity, `parentRollups`.                                          |
 | 4    | Start `bun run tarmac daemon --cursor fake --poll-interval 5` | Long-running loop; mention `.tarmac/` persistence.                                    |
 | 5    | Start `bun run tarmac dashboard` in second terminal           | Local-only UI; default `127.0.0.1:3847`.                                              |
-| 6    | Browser: scan + bouts panels                                  | Eligible children vs blocked parent; active runs.                                     |
+| 6    | Browser: issue queue + bout rollup                            | Eligible children vs blocked parent; active runs; logs pane shows redacted excerpts.  |
 | 7    | Browser: run cards + log excerpt                              | Redaction; join keys `runId` / `baseSha`.                                             |
 | 8    | `fp issue show <child-id>`                                    | `tarmac_*` after fake dispatch.                                                       |
 | 9    | Open `tarmac_cursor_url` (fake or real)                       | Inferred Cursor link; real path needs credentials.                                    |

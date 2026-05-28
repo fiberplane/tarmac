@@ -44,12 +44,24 @@ The dashboard is a **local-only operator surface**. It does not participate in d
 bun run tarmac dashboard
 ```
 
-By default it binds to `127.0.0.1:3847`. Open the printed URL in a browser. The UI polls `GET /api/status` every five seconds.
+By default it binds to `127.0.0.1:3847`. Open the printed URL in a browser. The UI polls `GET /api/status` every five seconds and keeps **Refresh** as the only interactive command.
 
-| Endpoint      | Purpose                                                                |
-| ------------- | ---------------------------------------------------------------------- |
-| `/`           | Dense HTML dashboard (scan, bouts, runs, log excerpts)                 |
-| `/api/status` | JSON status payload (scan, parent/child bouts, runs, dispatches, logs) |
+Layout regions:
+
+| Region            | Purpose                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| Header            | Repository/base metadata, live vs cached scan source, local-only/read-only hints, refresh |
+| Issue queue       | Display-only buckets (Active, Needs attention, Eligible, Blocked, Done, Unknown)          |
+| Issue detail      | Selected issue fields from FP/tarmac metadata                                             |
+| Bout rollup       | Parent/child rollups with eligibility and links                                           |
+| Run ledger        | Recent `.tarmac/runs.jsonl` sessions                                                      |
+| Dispatch timeline | Structured timeline from persisted run events                                             |
+| Logs              | Redacted monospace log rows from `.tarmac/runs/<run-id>/events.jsonl`                     |
+
+| Endpoint      | Purpose                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------- |
+| `/`           | Light retro-future operator console (issue queue, detail, bouts, run ledger, timeline, logs)       |
+| `/api/status` | JSON status payload (issue queue groups, parent/child bouts, runs, dispatches, timeline, log rows) |
 
 Security assumptions:
 

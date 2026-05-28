@@ -60,6 +60,22 @@ export type RunDispatchView = {
   readonly lastEventAt?: string;
 };
 
+export type RunTimelineEntryView = {
+  readonly at?: string;
+  readonly label: string;
+  readonly status: "ok" | "warn" | "bad" | "running" | "neutral";
+  readonly detail?: string;
+  readonly issue?: string;
+};
+
+export type LogExcerptRowView = {
+  readonly timestamp: string;
+  readonly type: string;
+  readonly issue?: string;
+  readonly severity: "info" | "warn" | "error";
+  readonly message: string;
+};
+
 export type RunCardView = {
   readonly runId: string;
   readonly command: RunCommand;
@@ -71,7 +87,15 @@ export type RunCardView = {
   readonly summary?: RunSummary;
   readonly dispatches: readonly RunDispatchView[];
   readonly logExcerpt: readonly string[];
+  readonly logRows: readonly LogExcerptRowView[];
+  readonly timeline: readonly RunTimelineEntryView[];
   readonly corruptEventLineCount?: number;
+};
+
+export type IssueQueueGroupView = {
+  readonly id: string;
+  readonly label: string;
+  readonly issues: readonly IssueView[];
 };
 
 export type DashboardStatus = {
@@ -83,6 +107,7 @@ export type DashboardStatus = {
     readonly baseSha: string;
   };
   readonly scan: ScanView;
+  readonly issueQueue: readonly IssueQueueGroupView[];
   readonly bouts: readonly BoutView[];
   readonly issues: readonly IssueView[];
   readonly runs: readonly RunCardView[];
