@@ -28,7 +28,7 @@ sh ops/cursor/bootstrap-env.sh
 
 The script is intentionally checked in instead of inlined in JSON. It installs
 or exposes Bun first, runs `bun install --frozen-lockfile`, installs
-REST-capable `fp` `0.24.0-next.85d878d` into `$HOME/.fiberplane/bin`, installs
+REST-capable `fp` `0.24.0-next.a23eb4e` into `$HOME/.fp/bin`, installs
 `drift` `v0.10.0` into `$HOME/.local/bin`, updates `PATH` in the current install
 shell, exposes all required CLIs through the base `PATH` for later worker
 shells, and checks `bun --version`, `fp --version`, plus `drift --version`. It

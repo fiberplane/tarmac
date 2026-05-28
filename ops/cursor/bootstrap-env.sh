@@ -103,7 +103,7 @@ install_bun_if_needed() {
 }
 
 install_fp() {
-  fp_version="${FP_VERSION:-0.24.0-next.85d878d}"
+  fp_version="${FP_VERSION:-0.24.0-next.a23eb4e}"
   export FP_INSTALL_DIR="${FP_INSTALL_DIR:-$HOME/.fiberplane/bin}"
   export PATH="$FP_INSTALL_DIR:$PATH"
 

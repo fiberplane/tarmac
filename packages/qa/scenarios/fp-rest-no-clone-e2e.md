@@ -43,6 +43,13 @@ restore the original values.
    Expected: Original `tarmac_*` property values are restored.
    Verify: Output says the original values were restored.
 
+## Optional: REST attach proof
+
+1. Action: Run `TARMAC_FP_REST_ATTACH_E2E=1 bun run e2e:fp-rest-attach`.
+   Expected: The script runs from `/tmp/tarmac-fp-rest-attach-e2e` and prints an
+   `fp-asset://` reference without touching a disposable issue.
+   Verify: Output ends with a pass line for REST no-clone `fp attach`.
+
 ## Cleanup
 
 If the script exits before cleanup, manually inspect the disposable issue in FP

@@ -166,6 +166,12 @@ Gated proof that REST property writes work from a non-repo directory (env gate d
 bun run e2e:fp-rest
 ```
 
+REST `fp attach` from a non-repo workdir (no disposable issue):
+
+```bash
+TARMAC_FP_REST_ATTACH_E2E=1 bun run e2e:fp-rest-attach
+```
+
 ## Configuring Cursor
 
 Host-side setup lives under `ops/cursor/`. Copy `ops/cursor/.env.example` to `ops/cursor/.env` (gitignored) and set host-only values—never commit `.env`.
@@ -194,7 +200,7 @@ The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. It
 does not rely on a user shell profile or local `~/.bun`; it installs or exposes
 Bun in the current shell, runs `bun install --frozen-lockfile`, installs `fp`,
 exposes both CLIs through the base worker `PATH`, and verifies both CLIs. Cursor
-bootstrap pins `fp` to REST-capable `0.24.0-next.85d878d`; set `FP_VERSION` only
+bootstrap pins `fp` to REST-capable `0.24.0-next.a23eb4e`; set `FP_VERSION` only
 when changing that pinned worker CLI version. To diagnose a base image without
 Bun, run:
 

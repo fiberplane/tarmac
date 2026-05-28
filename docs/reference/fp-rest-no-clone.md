@@ -70,15 +70,31 @@ FP_REMOTE=rest-api fp comment add "$ISSUE_ID" --file /tmp/evidence-comment.md
 
 If REST fp fails, verify the environment with non-secret checks such as `env | rg '^FP_(REMOTE|WORKSPACE|PROJECT_ID|PROJECT_PREFIX|SERVER_URL)='`. Report missing or invalid context without printing `FP_TOKEN`.
 
-## Tarmac Proof Script
+## Tarmac Proof Scripts
 
-Tarmac includes a gated proof script:
+Tarmac includes gated proof scripts for REST no-clone mode.
+
+Property round-trip (requires a disposable issue):
 
 ```bash
 TARMAC_FP_REST_E2E=1 \
 TARMAC_FP_REST_ISSUE_ID=TARM-... \
 bun run e2e:fp-rest
 ```
+
+`fp attach` from a non-repo workdir (no issue writes; proves worker screenshot
+evidence path). Requires the bootstrap-pinned REST-capable `fp`
+`0.24.0-next.a23eb4e` or newer:
+
+```bash
+TARMAC_FP_REST_ATTACH_E2E=1 \
+bun run e2e:fp-rest-attach
+```
+
+The attach proof runs from `/tmp/tarmac-fp-rest-attach-e2e`, forces
+`FP_REMOTE=[REDACTED]`, uploads a 1×1 probe PNG, and checks stdout for
+`fp-asset://`. It only reports required env **names** on failure; never print
+`FP_TOKEN` or other secret values.
 
 The script runs from `/tmp/tarmac-fp-rest-e2e`, forces `FP_REMOTE=rest-api`,
 writes every `tarmac_*` property, reads the issue back, verifies round-trip

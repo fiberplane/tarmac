@@ -136,6 +136,7 @@ Real mode calls `readRepositoryContext` with `requireLocalHeadAtRemote: true`:
 
 ```bash
 bun run e2e:fp-rest          # REST property round-trip from non-repo dir
+TARMAC_FP_REST_ATTACH_E2E=1 bun run e2e:fp-rest-attach  # REST fp attach smoke
 bun run e2e:cursor-bootstrap   # live Cursor worker bootstrap smoke
 ```
 
