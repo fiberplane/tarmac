@@ -71,14 +71,17 @@ Gated E2E (when env gates are set): `bun run e2e:fp-rest`.
 
 ## 4. Dashboard browser inspection
 
-| Check         | Action                                             | Pass criteria                                     |
-| ------------- | -------------------------------------------------- | ------------------------------------------------- |
-| Server starts | `bun run tarmac dashboard`                         | stderr prints loopback URL (default port `3847`)  |
-| Page loads    | Open `/` in browser                                | Scan, bouts, runs sections render                 |
-| API           | `curl -s http://127.0.0.1:3847/api/status \| head` | JSON payload; no raw tokens in output             |
-| Live scan     | Default (no `--no-live-scan`)                      | Eligible issues match `tarmac scan`               |
-| Cached-only   | `bun run tarmac dashboard --no-live-scan`          | Shows `.tarmac/` history when FP down             |
-| Security      | Confirm bind address                               | Stays on `127.0.0.1` unless you trust the network |
+| Check          | Action                                             | Pass criteria                                                             |
+| -------------- | -------------------------------------------------- | ------------------------------------------------------------------------- |
+| Server starts  | `bun run tarmac dashboard`                         | stderr prints loopback URL (default port `3847`)                          |
+| Page loads     | Open `/` in browser                                | Issue queue, detail, bouts, run ledger, timeline, and logs regions render |
+| Desktop layout | Resize to 1440×900 or 1280×800                     | Three-column console layout; logs pane visible; no clipped controls       |
+| Mobile layout  | Resize to 390×844 or narrow viewport               | Single-column stack; queue, detail, ledger, and logs remain reachable     |
+| API            | `curl -s http://127.0.0.1:3847/api/status \| head` | JSON payload includes `issueQueue`, `timeline`, `logRows`; no raw tokens  |
+| Live scan      | Default (no `--no-live-scan`)                      | Eligible issues match `tarmac scan`                                       |
+| Cached-only    | `bun run tarmac dashboard --no-live-scan`          | Shows `.tarmac/` history when FP down                                     |
+| Read-only      | Inspect header and controls                        | Only Refresh is active; no dispatch/reconcile/watch controls              |
+| Security       | Confirm bind address                               | Stays on `127.0.0.1` unless you trust the network                         |
 
 ## 5. Real Cursor path (configured operators only)
 

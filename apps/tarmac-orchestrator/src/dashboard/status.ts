@@ -12,6 +12,8 @@ import type { FpClient, OrchestratorIssue } from "../fp-client";
 import { LocalRunStore } from "../local-state";
 import { PersistedOrchestratorEventSchema } from "../local-state/schemas";
 import type { IssueRef, PersistedOrchestratorEvent } from "../local-state/types";
+import { buildIssueQueue } from "./grouping";
+import { buildLogRows, buildRunTimeline } from "./run-events";
 import type {
   BoutView,
   DashboardStatus,
@@ -315,6 +317,8 @@ const buildRunCard = async (
   const { events, corruptLineCount } = await store.readRunEvents(run.eventsPath, eventLimit);
   const persistedEvents = asPersistedEvents(events);
   const excerpt = persistedEvents.slice(-Math.min(eventLimit, 20)).map(formatLogLine);
+  const logRows = buildLogRows(persistedEvents, Math.min(eventLimit, 50));
+  const timeline = buildRunTimeline(persistedEvents);
 
   return {
     runId: run.runId,
@@ -327,6 +331,8 @@ const buildRunCard = async (
     ...(run.summary === undefined ? {} : { summary: run.summary }),
     dispatches: buildDispatches(persistedEvents),
     logExcerpt: excerpt,
+    logRows,
+    timeline,
     ...(corruptLineCount === 0 ? {} : { corruptEventLineCount: corruptLineCount }),
   };
 };
@@ -403,6 +409,7 @@ export const buildDashboardStatus = async (
     stateRoot: options.stateRoot,
     ...(runs[0] === undefined ? {} : { repository: runs[0].repository }),
     scan,
+    issueQueue: buildIssueQueue(mergedIssues, scan),
     bouts: buildBouts(mergedIssues),
     issues: mergedIssues,
     runs: runCards,
