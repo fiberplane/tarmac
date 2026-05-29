@@ -54,8 +54,8 @@ verify `.cursor` files, `ops/cursor/bootstrap-env.sh`, `bun --version`,
 
 The checked-in Cursor install command is `sh ops/cursor/bootstrap-env.sh`. The
 script installs or exposes Bun before running `bun install --frozen-lockfile`,
-installs REST-capable `fp` `0.24.0-next.85d878d` into
-`$HOME/.fiberplane/bin`, installs `drift` `v0.10.0` into `$HOME/.local/bin`,
+installs REST-capable `fp` `0.24.0-next.a23eb4e` into
+`$HOME/.fp/bin`, installs `drift` `v0.10.0` into `$HOME/.local/bin`,
 updates `PATH` for the current install shell, exposes `bun`, `fp`, and `drift`
 through the base `PATH` for later worker shells, and verifies `bun --version`,
 `fp --version`, plus `drift --version`. It does not read local shell profiles or

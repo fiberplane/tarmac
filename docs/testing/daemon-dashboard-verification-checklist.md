@@ -58,6 +58,12 @@ fp issue show <issue-id>
 
 Gated E2E (when env gates are set): `bun run e2e:fp-rest`.
 
+REST attach smoke (no disposable issue; requires bootstrap-pinned `fp`):
+
+```bash
+TARMAC_FP_REST_ATTACH_E2E=1 bun run e2e:fp-rest-attach
+```
+
 ## 3. Fake-mode orchestrator
 
 | Check           | Command                                                                                | Pass criteria                                                     |
