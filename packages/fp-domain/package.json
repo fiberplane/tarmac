@@ -9,6 +9,6 @@
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
-    "effect": "3.21.2"
+    "effect": "3.22.1"
   }
 }
